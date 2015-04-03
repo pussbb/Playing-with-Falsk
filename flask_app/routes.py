@@ -6,12 +6,8 @@
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
 
+from .controllers import welcome, build
 
-from . import Controller
 
-
-class Build(Controller):
-
-    def index(self):
-        return 'Ok'
-
+welcome.Welcome.register()
+build.Build.register()
