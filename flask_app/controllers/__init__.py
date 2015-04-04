@@ -40,6 +40,26 @@ def route(rule, **kwargs):
     return __real_wrapper('_route', rule, **kwargs)
 
 
+def get_method(rule, **kwargs):
+    kwargs['methods'] = ['GET']
+    return route(rule, **kwargs)
+
+
+def post_method(rule, **kwargs):
+    kwargs['methods'] = ['POST']
+    return route(rule, **kwargs)
+
+
+def delete_method(rule, **kwargs):
+    kwargs['methods'] = ['DELETE']
+    return route(rule, **kwargs)
+
+
+def put_method(rule, **kwargs):
+    kwargs['methods'] = ['PUT']
+    return route(rule, **kwargs)
+
+
 def http_method_route(rule, **kwargs):
     return __real_wrapper('_http_method_route', rule, **kwargs)
 
@@ -49,7 +69,12 @@ class ControllerResponse(Response):
     def __new__(cls, *args, **kwargs):
         kwargs.pop('mimetype', None)
         kwargs.pop('content_type', None)
+        headers = kwargs.pop('headers', {})
+        if headers:
+            headers.pop('Content-Type', None)
+            kwargs['headers'] = headers
         return super(ControllerResponse, cls).__new__(cls, *args, **kwargs)
+
 
 class XmlResponse(ControllerResponse):
 
@@ -57,22 +82,26 @@ class XmlResponse(ControllerResponse):
 
     def __init__(self, data, *args, **kwargs):
         super(XmlResponse, self).__init__(xml_dumps({'root': data}),
-                                           mimetype='application/xml',
-                                           content_type='application/xml',
-                                           *args, **kwargs)
+                                          mimetype='application/xml',
+                                          content_type='application/xml',
+                                          *args, **kwargs)
+
+
 class PlainResponse(ControllerResponse):
 
     default_mimetype = 'text/plain'
 
-class JsonResponce(ControllerResponse):
+
+class JsonResponse(ControllerResponse):
 
     default_mimetype = 'application/json'
 
     def __init__(self, data, *args, **kwargs):
-        super(JsonResponce, self).__init__(json.dumps(data, indent=2),
+        super(JsonResponse, self).__init__(json.dumps(data, indent=2),
                                            mimetype='application/json',
                                            content_type='application/json',
                                            *args, **kwargs)
+
 
 class ControllerRoute(object):
 
@@ -133,57 +162,57 @@ class Controller(MethodView, ControllerRoute):
 
     route_base = None
 
-    def dispatch_request(self, *args, **kwargs):
-        response = None
+    class Response(object):
 
-        if kwargs.get('__func') and not request.is_xhr:
-            func = kwargs.get('__func')
-            del kwargs['__func']
-            response = getattr(self, func)(*args, **kwargs)
+        @staticmethod
+        def to_json(data, status=200, **kwargs):
+            return JsonResponse(data, status=status, **kwargs)
+
+        @staticmethod
+        def to_xml(data, status=200, **kwargs):
+            return XmlResponse(data, status=status, **kwargs)
+
+        @staticmethod
+        def to_plain(data, status=200, **kwargs):
+            return PlainResponse(data, status=status, **kwargs)
+
+        @staticmethod
+        def as_requested(data, status=200, **kwargs):
+            accept_header = request.headers.get('content-type') or \
+                            request.headers.get('accept').split(',')[0]
+
+            if 'json' in accept_header:
+                return Controller.Response.to_json(data, status, **kwargs)
+            if 'xml' in accept_header:
+                return Controller.Response.to_xml(data, status, **kwargs)
+            if 'plain' in accept_header:
+                return Controller.Response.as_plain(data, status, **kwargs)
+            return make_response(data, status=status, **kwargs)
+
+    @property
+    def response(self):
+        return Controller.Response
+
+    def dispatch_request(self, *args, **kwargs):
+        result = None
+        func = kwargs.pop('__func', None)
+        if func and not request.is_xhr:
+            result = getattr(self, func)(*args, **kwargs)
         else:
             try:
-                response = super(Controller, self).dispatch_request(*args,
+                result = super(Controller, self).dispatch_request(*args,
                                                                     **kwargs)
             except AssertionError as exception:
                 raise HTTPNotImplemented(exception)
 
-        if isinstance(response, Response):
-            return response
+        if isinstance(result, Response):
+            return result
 
-        if not isinstance(response, (list, set, tuple)):
-            response = [response, 200]
-
-        if not isinstance(response[0], collections.Iterable):
-            return Response(*response)
-
-        return self.__make_response(*response)
-
-    def __make_response(self, *args, **kwargs):
-        accept_header = request.headers.get('content-type')
-        if not accept_header:
-            accept_header = request.headers.get('accept').split(',')[0]
-
-        if accept_header == 'application/json':
-            return self.json_response(*args, **kwargs)
-        if accept_header == 'application/xml':
-            return self.xml_response(*args, **kwargs)
-        return make_response(*args, **kwargs)
-
-    def json_response(self, data, status=200, *args, **kwargs):
-        ''' Return application/json
-
-        '''
-        return JsonResponce(data, status=status, *args, **kwargs)
-
-    def xml_response(self, data, status=200, *args, **kwargs):
-        ''' Return application/xml
-
-        '''
-        return XmlResponse(data, status);
+        return self.response.as_requested(*result)
 
     def render_view(self, name, view_data, status=200, *args, **kwargs):
         parts = re.split(r'([A-Z][a-z]+)+', self.__class__.__name__)
-        parts = map(lambda x:x.lower(), filter(None, parts))
+        parts = map(lambda x: x.lower(), filter(None, parts))
         parts.append(name)
         return make_response(
             render_template(os.path.join(*parts), **view_data),
