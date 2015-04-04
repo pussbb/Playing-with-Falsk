@@ -113,6 +113,7 @@ class ControllerRoute(object):
             for item in getattr(func, '_route', []):
                 cls.add_method_to_route(func_name, item, app, *class_args,
                                         **class_kwargs)
+
             for item in getattr(func, '_http_method_route', []):
                 rule, kwargs = item
                 kwargs['methods'] = [func_name.upper()]
@@ -166,18 +167,51 @@ class Controller(MethodView, ControllerRoute):
 
         @staticmethod
         def to_json(data, status=200, **kwargs):
+            """ Send response in JSON format
+
+            :param data:
+            :param status: int
+            :param kwargs:
+            :return:
+            """
             return JsonResponse(data, status=status, **kwargs)
 
         @staticmethod
         def to_xml(data, status=200, **kwargs):
+            """ Send response in XML format
+
+            :param data:
+            :param status:
+            :param kwargs:
+            :return:
+            """
             return XmlResponse(data, status=status, **kwargs)
 
         @staticmethod
         def to_plain(data, status=200, **kwargs):
+            """ Send response as plain text
+
+            :param data:
+            :param status:
+            :param kwargs:
+            :return:
+            """
             return PlainResponse(data, status=status, **kwargs)
 
         @staticmethod
+        def empty(status=204, **kwargs):
+            return Response(u"", status=status, **kwargs)
+
+        @staticmethod
         def as_requested(data, status=200, **kwargs):
+            """ Tries to determine what format is requested by parsing
+            request headers 'accept' or 'content-type'
+
+            :param data:
+            :param status:
+            :param kwargs:
+            :return:
+            """
             accept_header = request.headers.get('content-type') or \
                             request.headers.get('accept').split(',')[0]
 
@@ -195,6 +229,30 @@ class Controller(MethodView, ControllerRoute):
         return Controller.Response
 
     def __dummy(self, *args, **kwargs):
+        """For internal usage and do nothing
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        pass
+
+    def _before(self, *args, **kwargs):
+        """ Use it when you want to run things before running the class mehods
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        pass
+
+    def _after(self, *args, **kwargs):
+        """ Do something before rendering the output.
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
         pass
 
     def dispatch_request(self, *args, **kwargs):
@@ -208,11 +266,12 @@ class Controller(MethodView, ControllerRoute):
                 func = getattr(self, 'get', None)
             if not func:
                 raise HTTPNotImplemented()
-
+        self._before(*args, **kwargs)
         action = func.__name__
         getattr(self, "before_{0}".format(action), self.__dummy)(*args, **kwargs)
         result = func(*args, **kwargs)
         getattr(self, "after_{0}".format(action), self.__dummy)(*args, **kwargs)
+        self._after(*args, **kwargs)
 
         if not result:
             result = Response('')
@@ -226,6 +285,16 @@ class Controller(MethodView, ControllerRoute):
         return self.response.as_requested(*result)
 
     def render_view(self, name, view_data, status=200, *args, **kwargs):
+        """ Renders view in addition adds controller name in lower case as
+        directory where file should be
+
+        :param name: file name for e.g. index.html
+        :param view_data: dictionary with data which needed to render view
+        :param status: int status code default 200
+        :param args:
+        :param kwargs:
+        :return:
+        """
         parts = re.split(r'([A-Z][a-z]+)+', self.__class__.__name__)
         parts = map(lambda x: x.lower(), filter(None, parts))
         parts.append(name)
@@ -236,6 +305,17 @@ class Controller(MethodView, ControllerRoute):
             **kwargs
         )
 
+    def render_nothing(self):
+        """ Will genrate valid empty response with 204 http status code
+
+        :return:
+        """
+        return self.response.empty()
+
     @property
     def request_values(self):
+        """ Get requested query parameters including all GET and POST
+
+        :return: MultiDict
+        """
         return request.values
