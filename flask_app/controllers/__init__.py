@@ -187,27 +187,42 @@ class Controller(MethodView, ControllerRoute):
                 return Controller.Response.to_xml(data, status, **kwargs)
             if 'plain' in accept_header:
                 return Controller.Response.as_plain(data, status, **kwargs)
-            return make_response(data, status=status, **kwargs)
+
+            return make_response(Response(data), status=status, **kwargs)
 
     @property
     def response(self):
         return Controller.Response
 
+    def __dummy(self, *args, **kwargs):
+        pass
+
     def dispatch_request(self, *args, **kwargs):
-        result = None
+
         func = kwargs.pop('__func', None)
         if func and not request.is_xhr:
-            result = getattr(self, func)(*args, **kwargs)
+            func = getattr(self, func)
         else:
-            try:
-                result = super(Controller, self).dispatch_request(*args,
-                                                                    **kwargs)
-            except AssertionError as exception:
-                raise HTTPNotImplemented(exception)
+            func = getattr(self, request.method.lower(), None)
+            if func is None and request.method == 'HEAD':
+                func = getattr(self, 'get', None)
+            if not func:
+                raise HTTPNotImplemented()
+
+        action = func.__name__
+        getattr(self, "before_{0}".format(action), self.__dummy)(*args, **kwargs)
+        result = func(*args, **kwargs)
+        getattr(self, "after_{0}".format(action), self.__dummy)(*args, **kwargs)
+
+        if not result:
+            result = Response('')
 
         if isinstance(result, Response):
             return result
 
+        if not isinstance(result, (list, set, tuple)):
+            return self.response.as_requested(result)
+        # result (data, code) in function e.g. return {}, 300
         return self.response.as_requested(*result)
 
     def render_view(self, name, view_data, status=200, *args, **kwargs):
