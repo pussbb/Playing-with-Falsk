@@ -6,13 +6,12 @@
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
 
-
-import collections
 from functools import wraps
 import inspect
 import os
 
-from flask import request, Response, render_template, make_response, jsonify, current_app
+from flask import request, Response, render_template, make_response, jsonify, \
+    current_app
 from werkzeug.exceptions import NotImplemented as HTTPNotImplemented
 from flask.views import MethodView
 
@@ -31,6 +30,7 @@ def __real_wrapper(attr, rule, **kwargs):
         @wraps(func)
         def wrapper(self, *func_args, **func_kwargs):
             return func(self, *func_args, **func_kwargs)
+
         return wrapper
 
     return real_wrapper
@@ -65,7 +65,6 @@ def http_method_route(rule, **kwargs):
 
 
 class ControllerResponse(Response):
-
     def __new__(cls, *args, **kwargs):
         kwargs.pop('mimetype', None)
         kwargs.pop('content_type', None)
@@ -77,7 +76,6 @@ class ControllerResponse(Response):
 
 
 class XmlResponse(ControllerResponse):
-
     default_mimetype = 'text/xml'
 
     def __init__(self, data, *args, **kwargs):
@@ -88,12 +86,10 @@ class XmlResponse(ControllerResponse):
 
 
 class PlainResponse(ControllerResponse):
-
     default_mimetype = 'text/plain'
 
 
 class JsonResponse(ControllerResponse):
-
     default_mimetype = 'application/json'
 
     def __init__(self, data, *args, **kwargs):
@@ -104,7 +100,6 @@ class JsonResponse(ControllerResponse):
 
 
 class ControllerRoute(object):
-
     @classmethod
     def register(cls, app=current_app, *class_args, **class_kwargs):
         predict = lambda x: inspect.ismethod(x) or inspect.isfunction(x)
@@ -160,7 +155,6 @@ class ControllerRoute(object):
 
 
 class Controller(MethodView, ControllerRoute):
-
     route_base = None
 
     class Response(object):
@@ -266,9 +260,11 @@ class Controller(MethodView, ControllerRoute):
                 func = getattr(self, 'get', None)
             if not func:
                 raise HTTPNotImplemented()
+
         self._before(*args, **kwargs)
         action = func.__name__
-        getattr(self, "before_{0}".format(action), self.__dummy)(*args, **kwargs)
+        getattr(self, "before_{0}".format(action), self.__dummy)(*args,
+                                                                 **kwargs)
         result = func(*args, **kwargs)
         getattr(self, "after_{0}".format(action), self.__dummy)(*args, **kwargs)
         self._after(*args, **kwargs)

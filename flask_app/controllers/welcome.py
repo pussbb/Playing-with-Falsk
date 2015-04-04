@@ -6,10 +6,13 @@
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
 
-from . import Controller, route, post_method, http_method_route, JsonResponse, XmlResponse
+from . import Controller, route, post_method, http_method_route, JsonResponse, \
+    XmlResponse
 
 
 class Welcome(Controller):
+    def _before(self, *args, **kwargs):
+        print(args)
 
     @http_method_route('/<int:ddd>')
     def post(self, ddd=0):
@@ -31,7 +34,7 @@ class Welcome(Controller):
 
     @post_method('/post')
     def some_function(self):
-        return self.response.as_requested({}, 200)
+        return self.response.empty()  # .as_requested({}, 200)
 
     @route('/about-us')
     def about_us(self):
