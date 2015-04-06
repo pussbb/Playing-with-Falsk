@@ -270,7 +270,7 @@ class Controller(MethodView, ControllerRoute):
         self._after(*args, **kwargs)
 
         if not result:
-            result = Response('')
+            result = self.response.empty()
 
         if isinstance(result, Response):
             return result
