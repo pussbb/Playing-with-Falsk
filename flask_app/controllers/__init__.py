@@ -146,16 +146,21 @@ class ControllerRoute(object):
 
     @classmethod
     def add_route(cls, app, rule, view_func, **kwargs):
-        route_base = cls.route_base or ''
+        ROUTE_BASE = cls.ROUTE_BASE or ''
         base_url = app.config.get('APPLICATION_ROOT', '/') or '/'
         uri = "{app_root}/{route_base}{route}".format(app_root=base_url,
-                                                      route_base=route_base,
+                                                      route_base=ROUTE_BASE,
                                                       route=rule)
         app.add_url_rule(reduce_slashes(uri), view_func=view_func, **kwargs)
 
 
 class Controller(MethodView, ControllerRoute):
-    route_base = None
+    ROUTE_BASE = None
+
+    """ values 'json', 'xml', 'plain'
+
+    """
+    DEFAULT_RESPONSE_TYPE = None
 
     class Response(object):
 
@@ -214,9 +219,10 @@ class Controller(MethodView, ControllerRoute):
             if 'xml' in accept_header:
                 return Controller.Response.to_xml(data, status, **kwargs)
             if 'plain' in accept_header:
-                return Controller.Response.as_plain(data, status, **kwargs)
+                return Controller.Response.to_plain(data, status, **kwargs)
 
             return make_response(Response(data), status=status, **kwargs)
+
 
     @property
     def response(self):
@@ -276,9 +282,18 @@ class Controller(MethodView, ControllerRoute):
             return result
 
         if not isinstance(result, (list, set, tuple)):
-            return self.response.as_requested(result)
+            return self._make_response(result)
         # result (data, code) in function e.g. return {}, 300
-        return self.response.as_requested(*result)
+        return self._make_response(*result)
+
+    def _make_response(self, *args, **kwargs):
+        func = {
+            'json': self.response.to_json,
+            'xml': self.response.to_xml,
+            'plain': self.response.to_plain
+        }.get(self.DEFAULT_RESPONSE_TYPE, self.response.as_requested)
+        return func(*args, **kwargs)
+
 
     def render_view(self, name, view_data, status=200, *args, **kwargs):
         """ Renders view in addition adds controller name in lower case as
