@@ -60,7 +60,7 @@ def put_method(rule, **kwargs):
     return route(rule, **kwargs)
 
 
-def http_method_route(rule, **kwargs):
+def http_method(rule, **kwargs):
     return __real_wrapper('_http_method_route', rule, **kwargs)
 
 
@@ -146,10 +146,10 @@ class ControllerRoute(object):
 
     @classmethod
     def add_route(cls, app, rule, view_func, **kwargs):
-        ROUTE_BASE = cls.ROUTE_BASE or ''
+        route_base = cls.ROUTE_BASE or ''
         base_url = app.config.get('APPLICATION_ROOT', '/') or '/'
         uri = "{app_root}/{route_base}{route}".format(app_root=base_url,
-                                                      route_base=ROUTE_BASE,
+                                                      route_base=route_base,
                                                       route=rule)
         app.add_url_rule(reduce_slashes(uri), view_func=view_func, **kwargs)
 

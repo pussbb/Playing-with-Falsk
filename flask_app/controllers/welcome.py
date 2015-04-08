@@ -6,7 +6,7 @@
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
 
-from . import Controller, route, post_method, http_method_route, JsonResponse, \
+from . import Controller, route, post_method, http_method, JsonResponse, \
     XmlResponse
 
 
@@ -14,16 +14,16 @@ class Welcome(Controller):
     def _before(self, *args, **kwargs):
         print(args)
 
-    @http_method_route('/<int:ddd>')
+    @http_method('/<int:ddd>')
     def post(self, ddd=0):
         return XmlResponse({'asa': 'dfd'}, 200)
 
-    @http_method_route('/', defaults={'ddd': None})
-    @http_method_route('/<int:ddd>')
+    @http_method('/', defaults={'ddd': None})
+    @http_method('/<int:ddd>')
     def get(self, ddd):
         return {}, 200
 
-    @http_method_route('/<int:ddd>')
+    @http_method('/<int:ddd>')
     def prepost(self, ddd):
         return {}, 200
 
