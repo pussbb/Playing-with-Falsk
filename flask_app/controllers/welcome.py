@@ -11,6 +11,9 @@ from . import Controller, route, post_method, http_method, JsonResponse, \
 
 
 class Welcome(Controller):
+
+    ROUTE_BASE = ''
+
     def _before(self, *args, **kwargs):
         print(args)
 

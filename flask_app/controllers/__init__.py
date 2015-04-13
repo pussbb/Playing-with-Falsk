@@ -10,8 +10,7 @@ from functools import wraps
 import inspect
 import os
 
-from flask import request, Response, render_template, make_response, jsonify, \
-    current_app, Blueprint
+from flask import request, Response, render_template, make_response, current_app
 from werkzeug.exceptions import NotImplemented as HTTPNotImplemented
 from flask.views import MethodView
 
@@ -147,6 +146,12 @@ class ControllerRoute(object):
     @classmethod
     def add_route(cls, app, rule, view_func, **kwargs):
         route_base = cls.ROUTE_BASE or ''
+
+        if cls.ROUTE_BASE is None:
+            route_base = cls.__name__
+        if route_base:
+            route_base = route_base[0].lower() + route_base[1:]
+
         uri = "{app_root}/{route_base}{route}".format(
             app_root=app_root_url(app),
             route_base=route_base,
