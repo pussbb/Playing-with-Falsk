@@ -7,7 +7,8 @@ from __future__ import unicode_literals, print_function, absolute_import, \
     division
 
 import re
-from flask import url_for
+from flask import url_for, Blueprint
+
 try:
     from urllib.parse import unquote_plus
 except ImportError, _:
@@ -36,3 +37,10 @@ def build_url(endpoint, unquote=False, **kwargs):
     if unquote:
         return unquote_plus(url)
     return url
+
+
+def app_root_url(app, name=""):
+    root_url = '/'
+    if not isinstance(app, Blueprint):
+        root_url = app.config.get('APPLICATION_ROOT', '/') or '/'
+    return reduce_slashes(root_url+"/"+name).rstrip("/")

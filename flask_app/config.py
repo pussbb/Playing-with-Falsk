@@ -11,6 +11,7 @@ class Config(object):
     DEBUG = False
     TESTING = False
     PORT = 5050
+    APPLICATION_ROOT = '/v1'
 
     TRAP_HTTP_EXCEPTIONS = True
     TRAP_BAD_REQUEST_ERRORS = False

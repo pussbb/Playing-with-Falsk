@@ -11,14 +11,14 @@ import inspect
 import os
 
 from flask import request, Response, render_template, make_response, jsonify, \
-    current_app
+    current_app, Blueprint
 from werkzeug.exceptions import NotImplemented as HTTPNotImplemented
 from flask.views import MethodView
 
 import json
 import re
 from simplexml import dumps as xml_dumps
-from ..helpers.url import reduce_slashes
+from ..helpers.url import reduce_slashes, app_root_url
 
 
 def __real_wrapper(attr, rule, **kwargs):
@@ -147,10 +147,12 @@ class ControllerRoute(object):
     @classmethod
     def add_route(cls, app, rule, view_func, **kwargs):
         route_base = cls.ROUTE_BASE or ''
-        base_url = app.config.get('APPLICATION_ROOT', '/') or '/'
-        uri = "{app_root}/{route_base}{route}".format(app_root=base_url,
-                                                      route_base=route_base,
-                                                      route=rule)
+        uri = "{app_root}/{route_base}{route}".format(
+            app_root=app_root_url(app),
+            route_base=route_base,
+            route=rule
+        )
+
         app.add_url_rule(reduce_slashes(uri), view_func=view_func, **kwargs)
 
 
@@ -221,7 +223,7 @@ class Controller(MethodView, ControllerRoute):
             if 'plain' in accept_header:
                 return Controller.Response.to_plain(data, status, **kwargs)
 
-            return make_response(Response(data), status=status, **kwargs)
+            return make_response(Response(data), status, **kwargs)
 
 
     @property
@@ -293,7 +295,6 @@ class Controller(MethodView, ControllerRoute):
             'plain': self.response.to_plain
         }.get(self.DEFAULT_RESPONSE_TYPE, self.response.as_requested)
         return func(*args, **kwargs)
-
 
     def render_view(self, name, view_data, status=200, *args, **kwargs):
         """ Renders view in addition adds controller name in lower case as
