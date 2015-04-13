@@ -7,7 +7,9 @@ from __future__ import unicode_literals, print_function, absolute_import, \
     division
 
 from . import Controller, route, post_method, http_method, JsonResponse, \
-    XmlResponse
+    XmlResponse, get_method
+from pydoc import render_doc, doc, plain
+from flask import current_app
 
 
 class Welcome(Controller):
@@ -19,6 +21,11 @@ class Welcome(Controller):
 
     @http_method('/<int:ddd>')
     def post(self, ddd=0):
+        """
+
+        :param ddd:
+        :return:
+        """
         return XmlResponse({'asa': 'dfd'}, 200)
 
     @http_method('/', defaults={'ddd': None})
@@ -33,6 +40,10 @@ class Welcome(Controller):
     @route('/welcome')
     @route('/')
     def index(self):
+        """
+
+        :return:
+        """
         return self.render_view('index.html', {'title': "Index"})
 
     @post_method('/post')
@@ -42,3 +53,11 @@ class Welcome(Controller):
     @route('/about-us')
     def about_us(self):
         return self.render_view('index.html', {'title': "About US"})
+
+    @get_method('/docs')
+    def docs(self):
+        def routes():
+            for key, view_function in current_app.view_functions.items():
+                yield (key, plain(render_doc(view_function, title="%s")))
+
+        return self.render_view('docs.html', {'gen_docs': routes()})
