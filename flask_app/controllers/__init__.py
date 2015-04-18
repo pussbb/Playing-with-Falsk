@@ -17,6 +17,7 @@ from flask.views import MethodView
 import json
 import re
 from simplexml import dumps as xml_dumps
+from werkzeug.wrappers import BaseResponse
 from ..helpers.url import reduce_slashes, app_root_url
 
 
@@ -292,7 +293,7 @@ class Controller(MethodView, ControllerRoute):
         if not result:
             result = self.response.empty()
 
-        if isinstance(result, Response):
+        if isinstance(result, BaseResponse):
             return result
 
         if not isinstance(result, (list, set, tuple)):

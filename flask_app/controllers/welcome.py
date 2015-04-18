@@ -10,6 +10,8 @@ from . import Controller, route, post_method, http_method, JsonResponse, \
     XmlResponse, get_method
 from pydoc import render_doc, doc, plain
 from flask import current_app
+from werkzeug.utils import redirect
+from flask_app.helpers.url import build_url
 
 
 class Welcome(Controller):
@@ -44,7 +46,8 @@ class Welcome(Controller):
 
         :return:
         """
-        return self.render_view('index.html', {'title': "Index"})
+        return redirect(build_url('Welcome:about_us'))
+        #return self.render_view('index.html', {'title': "Index"})
 
     @post_method('/post')
     def some_function(self):
