@@ -57,8 +57,9 @@ class Welcome(Controller):
     def about_us(self):
         return self.render_view('index.html', {'title': "About US"})
 
-    @get_method('/docs')
+    @get_method('/docs/')
     def docs(self):
+        print(build_url('test.Test:index'))
         def routes():
             for key, view_function in current_app.view_functions.items():
                 yield (key, plain(render_doc(view_function, title="%s")))

@@ -165,7 +165,10 @@ class ControllerRoute(object):
             route_base=route_base,
             route=rule
         )
-
+        # get settings if it an blueprint get it from current app
+        config = getattr(app, 'config', current_app.config)
+        if 'strict_slashes' not in kwargs.keys():
+            kwargs['strict_slashes'] = config.get('STRICT_SLASHES', True)
         app.add_url_rule(reduce_slashes(uri), view_func=view_func, **kwargs)
 
 

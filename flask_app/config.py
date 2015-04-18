@@ -10,6 +10,7 @@ from __future__ import unicode_literals, print_function, absolute_import, \
 class Config(object):
     DEBUG = False
     TESTING = False
+    STRICT_SLASHES = False
     PORT = 5050
     APPLICATION_ROOT = '/v1'
 
