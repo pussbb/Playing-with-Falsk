@@ -12,7 +12,7 @@ class Config(object):
     TESTING = False
     STRICT_SLASHES = False
     PORT = 5050
-    APPLICATION_ROOT = '/v1'
+    APPLICATION_ROOT = '/'
 
     TRAP_HTTP_EXCEPTIONS = True
     TRAP_BAD_REQUEST_ERRORS = False

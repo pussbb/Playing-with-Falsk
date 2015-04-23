@@ -41,7 +41,7 @@ with APP.app_context():
 def serve(config_env="Development"):
     if config_env:
         init_app_settings(config_env)
-    APP.run()
+    APP.run('0.0.0.0', APP.config.get('PORT', None))
 
 @APP.errorhandler(Exception)
 def exception_handler(exception=None):
