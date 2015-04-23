@@ -300,11 +300,11 @@ class Controller(MethodView, ControllerRoute):
             return result
 
         if not isinstance(result, (list, set, tuple)):
-            return self._make_response(result)
+            return self.make_response(result)
         # result (data, code) in function e.g. return {}, 300
-        return self._make_response(*result)
+        return self.make_response(*result)
 
-    def _make_response(self, *args, **kwargs):
+    def make_response(self, *args, **kwargs):
         func = {
             'json': self.response.to_json,
             'xml': self.response.to_xml,
