@@ -60,4 +60,4 @@ def exception_handler(exception=None):
         msg = traceback.format_exc()
     current_app.logger.error(str(request))
     current_app.logger.exception(exception)
-    return Controller.Response.as_requested(msg, code)
+    return Controller.Response.to_plain(msg, code)
