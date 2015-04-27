@@ -55,7 +55,8 @@ class Welcome(Controller):
 
     @route('/about-us')
     def about_us(self):
-        return self.render_view('index.html', {'title': "About US"})
+        #['docs.html', 'index.html']
+        return self.render_view(['//docs.html', 'index.html'], {'title': "About US"})
 
     @get_method('/docs/')
     def docs(self):

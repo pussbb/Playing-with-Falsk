@@ -9,6 +9,7 @@ from __future__ import unicode_literals, print_function, absolute_import, \
 from functools import wraps
 import inspect
 import os
+import collections
 
 from flask import request, Response, render_template, make_response, current_app
 from werkzeug.exceptions import NotImplemented as HTTPNotImplemented
@@ -312,29 +313,43 @@ class Controller(MethodView, ControllerRoute):
         }.get(self.DEFAULT_RESPONSE_TYPE, self.response.as_requested)
         return func(*args, **kwargs)
 
-    def render_view(self, name, view_data, status=200, *args, **kwargs):
+    def render_view(self, template_name_or_list, view_data, status=200, *args, **kwargs):
         """ Renders view in addition adds controller name in lower case as
-        directory where file should be
+        directory where file should be. To disable behavior adding class name
+        please use '//' at the beginning of your template name
+        for e.g. '//path/some.html' -> 'path/some.html'
 
-        :param name: file name for e.g. index.html
+        :param name: file name or list of file names for e.g. index.html
         :param view_data: dictionary with data which needed to render view
         :param status: int status code default 200
         :param args:
         :param kwargs:
         :return:
         """
-        parts = re.split(r'([A-Z][a-z]+)+', self.__class__.__name__)
-        parts = map(lambda x: x.lower(), filter(None, parts))
-        parts.append(name)
+
+        if not template_name_or_list:
+            raise ValueError("View name must be not empty")
+        if not isinstance(template_name_or_list, (list, tuple, set)):
+            template_name_or_list = [template_name_or_list]
+        templates = []
+        for template_name in template_name_or_list:
+            if not template_name.startswith('//'):
+                parts = re.split(r'([A-Z][a-z]+)+', self.__class__.__name__)
+                parts = map(lambda x: x.lower(), filter(None, parts))
+                parts.append(template_name)
+                templates.append(os.path.join(*parts))
+            else:
+                templates.append(template_name.lstrip('//'))
+
         return make_response(
-            render_template(os.path.join(*parts), **view_data),
+            render_template(templates, **view_data),
             status,
             *args,
             **kwargs
         )
 
     def render_nothing(self):
-        """ Will genrate valid empty response with 204 http status code
+        """ Will generate valid empty response with 204 http status code
 
         :return:
         """
