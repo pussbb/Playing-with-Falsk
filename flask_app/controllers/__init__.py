@@ -9,7 +9,6 @@ from __future__ import unicode_literals, print_function, absolute_import, \
 from functools import wraps
 import inspect
 import os
-import collections
 
 from flask import request, Response, render_template, make_response, current_app
 from werkzeug.exceptions import NotImplemented as HTTPNotImplemented
