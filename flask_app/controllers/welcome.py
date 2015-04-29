@@ -8,11 +8,39 @@ from __future__ import unicode_literals, print_function, absolute_import, \
 
 from . import Controller, route, post_method, http_method, JsonResponse, \
     XmlResponse, get_method
+from functools import wraps
 from pydoc import render_doc, doc, plain
-from flask import current_app
+from flask import current_app, Response, request, session
 from werkzeug.utils import redirect
 from flask_app.helpers.url import build_url
 
+
+def check_auth(username, password):
+    """This function is called to check if a username /
+    password combination is valid.
+    """
+    return username == 'admin' and password == 'secret'
+
+
+def authenticate():
+    """Sends a 401 response that enables basic auth"""
+    return Response(
+    'Could not verify your access level for that URL.\n'
+    'You have to login with proper credentials', 401,
+    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if session.get('auth'):
+            return f(*args, **kwargs)
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        session['auth'] = auth
+        return f(*args, **kwargs)
+    return decorated
 
 class Welcome(Controller):
 
@@ -58,6 +86,7 @@ class Welcome(Controller):
         #['docs.html', 'index.html']
         return self.render_view(['//docs.html', 'index.html'], {'title': "About US"})
 
+    @requires_auth
     @get_method('/docs/')
     def docs(self):
         print(build_url('test.Test:index'))

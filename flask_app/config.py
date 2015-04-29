@@ -19,6 +19,8 @@ class Config(object):
     JSON_AS_ASCII = False
     JSONIFY_PRETTYPRINT_REGULAR = True
 
+    SECRET_KEY = 'F12Zr47j\3yX R~X@H!jmM]Lwf/,?KT'
+
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_COMMIT_ON_TEARDOWN = False
     SQLALCHEMY_POOL_RECYCLE = 15*60
