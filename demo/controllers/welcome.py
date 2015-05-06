@@ -6,7 +6,7 @@
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
 
-from . import Controller, route, post_method, http_method, JsonResponse, \
+from flask_app.controller import Controller, route, post_method, http_method, JsonResponse, \
     XmlResponse, get_method
 from functools import wraps
 from pydoc import render_doc, doc, plain

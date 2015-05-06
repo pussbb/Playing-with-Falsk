@@ -12,7 +12,7 @@ if sys.version_info[0] < 3:
     imp.reload(sys)
     sys.setdefaultencoding("UTF-8")
 
-from flask_app import serve
+from demo import serve
 
 if __name__ == "__main__":
-    serve()
+    serve("Development")

@@ -22,6 +22,7 @@ class Config(object):
     SECRET_KEY = 'dF=DL2)DWJ2)+OKaUP3Tz!b;n&Ns/$qxT7aeg!~;FVAcVnM[HV;4m:U/=wmP}S?R'
 
 
+
 class ProductionConfig(Config):
     pass
 

@@ -6,58 +6,45 @@
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
 import os
-import traceback
 
-from flask import Flask, current_app, request
-from flask_bootstrap3 import Bootstrap
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.exceptions import HTTPException
-from werkzeug.routing import RequestRedirect
-from flask_app.controllers import Controller
+from flask import Flask, send_from_directory
 
-APP_NAME = __name__.split('.')[0]
-OS_ENV_SETTINGS_KEY = '{0}_SETTINGS'.format(APP_NAME)
-
-APP = Flask(__name__.split('.')[0], instance_relative_config=True)
+OS_ENV_SETTINGS_KEY_TEMPLATE = '{app_name}_SETTINGS'
 
 
-def init_app_settings(config_name=None):
+def from_module_name(name=__name__):
+    return name.split('.')[0]
+
+
+def init_app_settings(app, config_name=None):
+    os_env_settings_key = OS_ENV_SETTINGS_KEY_TEMPLATE.format(app_name=app.name)
     if config_name is not None:
-        os.environ[OS_ENV_SETTINGS_KEY] = config_name
+        os.environ[os_env_settings_key] = config_name
     config = '{0}.config.{1}Config'.format(
-        APP_NAME,
-        os.environ.get(OS_ENV_SETTINGS_KEY, 'Production')
+        app.name,
+        os.environ.get(os_env_settings_key, 'Production')
     )
 
-    APP.config.from_object(config)
-
-init_app_settings()
-DB = SQLAlchemy(APP)
-Bootstrap(APP)
-with APP.app_context():
-    from . import routes
+    app.config.from_object(config)
 
 
-def serve(config_env="Development"):
-    if config_env:
-        init_app_settings(config_env)
-    APP.run('0.0.0.0', APP.config.get('PORT', None))
+def create_app(app_name, config_name=None, **app_kwargs):
+    app = Flask(app_name, instance_relative_config=True, **app_kwargs)
+    init_app_settings(app, config_name)
 
-@APP.errorhandler(Exception)
-def exception_handler(exception=None):
-    """Catch all exception and output them in requested format
+    favicon_icon_path = os.path.join(app.root_path, 'static')
+    if not os.path.isfile(os.path.join(favicon_icon_path, 'favicon.ico')):
+        favicon_icon_path = app.root_path
 
-    """
-    print(exception)
-    if isinstance(exception, RequestRedirect):
-        return exception.get_response(current_app)
+    @app.route('/favicon.ico')
+    def favicon():
+        return send_from_directory(favicon_icon_path, 'favicon.ico',
+                                   mimetype='image/vnd.microsoft.icon')
 
-    msg = str(exception)
-    code = 500
-    if isinstance(exception, HTTPException):
-        code = exception.code
-    if current_app.config['DEBUG']:
-        msg = traceback.format_exc()
-    current_app.logger.error(str(request))
-    current_app.logger.exception(exception)
-    return Controller.Response.to_plain(msg, code)
+    return app
+
+
+def serve(app, app_env=None):
+    if app_env:
+        init_app_settings(app, app_env)
+    app.run('0.0.0.0', app.config.get('PORT', None))
