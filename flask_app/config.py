@@ -5,6 +5,7 @@
 
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
+import os
 
 
 class Config(object):
@@ -13,6 +14,8 @@ class Config(object):
     STRICT_SLASHES = False
     PORT = 5050
     APPLICATION_ROOT = '/'
+    PROFILE = True
+    PROFILE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'profile')
 
     TRAP_HTTP_EXCEPTIONS = True
     TRAP_BAD_REQUEST_ERRORS = False

@@ -8,6 +8,8 @@ from __future__ import unicode_literals, print_function, absolute_import, \
 import os
 
 from flask import Flask, send_from_directory
+from werkzeug.contrib.lint import LintMiddleware
+from werkzeug.contrib.profiler import ProfilerMiddleware
 
 OS_ENV_SETTINGS_KEY_TEMPLATE = '{app_name}_SETTINGS'
 
@@ -40,6 +42,13 @@ def create_app(app_name, config_name=None, **app_kwargs):
     def favicon():
         return send_from_directory(favicon_icon_path, 'favicon.ico',
                                    mimetype='image/vnd.microsoft.icon')
+    if app.debug:
+        app.wsgi_app = LintMiddleware(app.wsgi_app)
+    if app.config.get('PROFILE', app.debug):
+        app.wsgi_app = ProfilerMiddleware(
+            app.wsgi_app,
+            profile_dir=app.config.get('PROFILE_DIR', None)
+        )
 
     return app
 

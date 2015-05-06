@@ -6,7 +6,7 @@
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
 
-from flask_app.controller import Controller, route, post_method, http_method, JsonResponse, \
+from flask_app.controller import Controller, route, post_method, http_method, PlainResponse, \
     XmlResponse, get_method
 from functools import wraps
 from pydoc import render_doc, doc, plain
@@ -41,6 +41,7 @@ def requires_auth(f):
         session['auth'] = auth
         return f(*args, **kwargs)
     return decorated
+
 
 class Welcome(Controller):
 
@@ -86,10 +87,15 @@ class Welcome(Controller):
         #['docs.html', 'index.html']
         return self.render_view(['//docs.html', 'index.html'], {'title': "About US"})
 
+
+    @route('/test')
+    def test(self):
+        return PlainResponse('', status=33333)
+
     @requires_auth
     @get_method('/docs/')
     def docs(self):
-        print(build_url('test.Test:index'))
+
         def routes():
             for key, view_function in current_app.view_functions.items():
                 yield (key, plain(render_doc(view_function, title="%s")))
