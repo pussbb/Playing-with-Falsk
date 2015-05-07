@@ -44,7 +44,8 @@ def create_app(app_name, config_name=None, **app_kwargs):
                                    mimetype='image/vnd.microsoft.icon')
     if app.debug:
         app.wsgi_app = LintMiddleware(app.wsgi_app)
-    if app.config.get('PROFILE', app.debug):
+
+    if app.config.get('PROFILE', False):
         app.wsgi_app = ProfilerMiddleware(
             app.wsgi_app,
             profile_dir=app.config.get('PROFILE_DIR', None)

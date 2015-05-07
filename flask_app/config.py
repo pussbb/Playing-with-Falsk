@@ -14,7 +14,7 @@ class Config(object):
     STRICT_SLASHES = False
     PORT = 5050
     APPLICATION_ROOT = '/'
-    PROFILE = True
+    PROFILE = False
     PROFILE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'profile')
 
     TRAP_HTTP_EXCEPTIONS = True
