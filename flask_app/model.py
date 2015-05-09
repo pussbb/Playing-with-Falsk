@@ -52,7 +52,9 @@ class BaseModel(object):
         return value
 
     @classmethod
-    def find(cls, **criterion):
+    def find(cls, id=None, **criterion):
+        if id:
+            criterion['id'] = id
         return cls.query.filter_by(**criterion).one()
 
     @classmethod
