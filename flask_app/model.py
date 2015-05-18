@@ -8,6 +8,7 @@ from __future__ import unicode_literals, print_function, absolute_import, \
 
 import datetime
 from decimal import Decimal
+from sqlalchemy import event
 from sqlalchemy_utils import Choice
 
 
@@ -61,3 +62,24 @@ class BaseModel(object):
     @classmethod
     def find_all(cls, **criterion):
         return cls.query.filter_by(**criterion)
+
+class BaseReadOnlyModel(BaseModel):
+
+    def __new__(cls, *args, **kwargs):
+        obj = super(BaseReadOnlyModel, cls).__new__(cls, *args, **kwargs)
+
+        for model_event in ['before_insert', 'before_delete', 'before_update']:
+            event.listen(obj.__class__, model_event, obj.raise_exception)
+
+        for column in obj.__table__.columns:
+            item = getattr(obj.__class__, column.name)
+            for attr_event in ['append', 'set', 'remove']:
+                event.listen(item, attr_event, obj.read_only_column)
+
+        return obj
+
+    def raise_exception(self, *args, **kwargs):
+        raise Exception('Read only model')
+
+    def read_only_column(self, *args, **kwargs):
+        raise Exception('{key} is read only column'.format(key=args[-1].key))
