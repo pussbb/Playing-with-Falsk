@@ -6,10 +6,27 @@
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
 
-import json
-
-from flask import Response, request, make_response
+from flask import Response, request, make_response, json
 from simplexml import dumps as xml_dumps
+
+from ..model import BaseModel
+
+
+def to_json(data, **kwargs):
+    def default(obj):
+        if isinstance(obj, BaseModel):
+            return obj.dump()
+        try:
+            iterable = iter(obj)
+        except TypeError:
+            pass
+        else:
+            return list(iterable)
+        # Let the base class default method raise the TypeError
+        return json.JSONEncoder.default(obj)
+    kwargs['indent'] = 2
+    kwargs['default'] = default
+    return json.dumps(data, **kwargs)
 
 
 class CustomResponse(Response):
@@ -41,7 +58,7 @@ class JsonResponse(CustomResponse):
     default_mimetype = 'application/json'
 
     def __init__(self, data, *args, **kwargs):
-        super(JsonResponse, self).__init__(json.dumps(data, indent=2),
+        super(JsonResponse, self).__init__(to_json(data),
                                            mimetype='application/json',
                                            content_type='application/json',
                                            *args, **kwargs)
@@ -126,3 +143,4 @@ class ControllerResponse(object):
             'plain': self.response.to_plain
         }.get(self.DEFAULT_RESPONSE_TYPE, self.response.as_requested)
         return func(*args, **kwargs)
+

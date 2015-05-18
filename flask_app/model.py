@@ -49,6 +49,7 @@ class BaseModel(object):
             return str(value)
         elif val_type is Choice:
             value = value.value
+
         return value
 
     @classmethod

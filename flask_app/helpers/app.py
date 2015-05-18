@@ -6,6 +6,7 @@
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
 import importlib
+
 import os
 import traceback
 import warnings
@@ -13,6 +14,8 @@ from flask import Blueprint, current_app, request
 from werkzeug.exceptions import HTTPException
 from werkzeug.routing import RequestRedirect
 from ..controller import Controller
+from ..controller.response import to_json
+
 from .url import app_root_url
 
 
@@ -70,3 +73,4 @@ def simple_exception_handler(exception=None):
     current_app.logger.error(str(request))
     current_app.logger.exception(exception)
     return Controller.Response.to_plain(msg, code)
+
