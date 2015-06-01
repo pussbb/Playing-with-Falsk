@@ -11,7 +11,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, backref
 
 
-class User(ReadOnly):
+class User(DbModel):
     __tablename__ = 'users'
     EXTRA_FIELDS = ['full_name', 'settings']
     id = DB.Column(DB.Integer, primary_key=True)

@@ -7,8 +7,10 @@ from __future__ import unicode_literals, print_function, absolute_import, \
     division
 
 import datetime
+import inspect
 from decimal import Decimal
 from sqlalchemy import event
+from sqlalchemy.orm.attributes import InstrumentedAttribute
 from sqlalchemy_utils import Choice
 
 
@@ -66,20 +68,26 @@ class BaseModel(object):
 class BaseReadOnlyModel(BaseModel):
 
     def __new__(cls, *args, **kwargs):
-        obj = super(BaseReadOnlyModel, cls).__new__(cls, *args, **kwargs)
+        if not hasattr(cls, '__wrapped_readonly__'):
+            for model_event in ['insert', 'delete', 'update']:
+                event.listen(cls, "before_{0}".format(model_event),
+                             cls.__raise_exception)
 
-        for model_event in ['before_insert', 'before_delete', 'before_update']:
-            event.listen(obj.__class__, model_event, obj.raise_exception)
+            predict = lambda x: isinstance(x, InstrumentedAttribute)
+            for attr_name, attr in inspect.getmembers(cls, predict):
+                for attr_event in ['append', 'set', 'remove']:
+                    event.listen(attr, attr_event, cls.__read_only_column)
+            cls.__wrapped_readonly__ = True
 
-        for column in obj.__table__.columns:
-            item = getattr(obj.__class__, column.name)
-            for attr_event in ['append', 'set', 'remove']:
-                event.listen(item, attr_event, obj.read_only_column)
+        return super(BaseReadOnlyModel, cls).__new__(cls, *args, **kwargs)
 
-        return obj
+    @classmethod
+    def __raise_exception(cls, *args, **kwargs):
+        raise Exception('{0} Read only model'.format(cls.__name__))
 
-    def raise_exception(self, *args, **kwargs):
-        raise Exception('Read only model')
-
-    def read_only_column(self, *args, **kwargs):
-        raise Exception('{key} is read only column'.format(key=args[-1].key))
+    @classmethod
+    def __read_only_column(cls, *args, **kwargs):
+        raise Exception('{name}.{key} is read only column'.format(
+            key=args[-1].key,
+            name=cls.__name__
+        ))

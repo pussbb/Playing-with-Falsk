@@ -19,14 +19,14 @@ with APP.app_context():
     from . import routes
 
 from .models.user import User, UserSettings
-
+"""
 DB.create_all()
 DB.session.add(User(username='admin', email='admin@example.com'))
 DB.session.add(User(username='user', email='user@example.com'))
 DB.session.add(UserSettings(user_id=1, properties='[]'))
 DB.session.commit()
 raise SystemExit
-"""
+
 user = User.find(username='admin')
 iuser = iter(user)
 print('iuser', iuser.next())

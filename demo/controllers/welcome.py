@@ -68,6 +68,10 @@ class Welcome(Controller):
     def prepost(self, ddd):
         return {}, 200
 
+    @http_method('/<int:ddd>')
+    def delete(self, ddd):
+        return {}, 200
+
     @route('/welcome')
     @route('/')
     def index(self):
