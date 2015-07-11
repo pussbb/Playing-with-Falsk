@@ -11,7 +11,7 @@ from flask import url_for, Blueprint
 
 try:
     from urllib.parse import unquote_plus
-except ImportError, _:
+except ImportError as _:
     from urllib import unquote_plus
 
 
