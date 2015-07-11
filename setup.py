@@ -8,5 +8,11 @@ setup(
     license='',
     author='pussbb',
     author_email='pussbb@gmail.com',
-    description=''
+    description='',
+    include_package_data=True,
+    platforms='any',
+    install_requires=[
+        'flask',
+        'Flask-SQLAlchemy',
+    ],
 )
