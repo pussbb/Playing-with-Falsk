@@ -14,5 +14,7 @@ setup(
     install_requires=[
         'flask',
         'Flask-SQLAlchemy',
+        'python-simplexml',
+        'SQLAlchemy-Utils',
     ],
 )
