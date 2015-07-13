@@ -19,7 +19,10 @@ def from_module_name(name=__name__):
 
 
 def init_app_settings(app, config_name=None):
-    os_env_settings_key = OS_ENV_SETTINGS_KEY_TEMPLATE.format(app_name=app.name)
+    os_env_settings_key = OS_ENV_SETTINGS_KEY_TEMPLATE.format(
+        app_name=app.name
+    ).upper()
+
     if config_name is not None:
         os.environ[os_env_settings_key] = config_name
     config = '{0}.config.{1}Config'.format(

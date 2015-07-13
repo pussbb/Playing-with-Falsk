@@ -46,6 +46,8 @@ class BaseModel(object):
         """Format values if needed
 
         """
+        if not hasattr(self, attr):
+            return None
         value = getattr(self, attr)
         val_type = type(value)
         if val_type in (datetime.datetime, datetime.date, Decimal):
