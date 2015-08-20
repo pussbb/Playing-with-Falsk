@@ -5,6 +5,10 @@
 
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
+
+__all__ = ["route", "get_method", "post_method", "delete_method",
+           "put_method", "http_method"]
+
 from functools import wraps
 
 

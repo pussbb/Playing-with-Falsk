@@ -14,7 +14,6 @@ from flask import Blueprint, current_app, request
 from werkzeug.exceptions import HTTPException
 from werkzeug.routing import RequestRedirect
 from ..controller import Controller
-from ..controller.response import to_json
 
 from .url import app_root_url
 

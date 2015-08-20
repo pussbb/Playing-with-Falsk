@@ -21,7 +21,8 @@ from .response import *
 
 
 class Controller(MethodView, ControllerRoute, ControllerResponse):
-    ROUTE_BASE = None
+
+    resource = None
 
     def __dummy(self, *args, **kwargs):
         """For internal usage and do nothing

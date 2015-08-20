@@ -66,10 +66,10 @@ class ControllerRoute(object):
 
     @classmethod
     def add_route(cls, app, rule, view_func, **kwargs):
-        route_base = cls.ROUTE_BASE or ''
-
-        if cls.ROUTE_BASE is None:
+        route_base = ''
+        if cls.resource is None:
             route_base = cls.__name__
+
         if route_base:
             route_base = route_base[0].lower() + route_base[1:]
 

@@ -30,38 +30,44 @@ def to_json(data, **kwargs):
 
 
 class CustomResponse(Response):
-    def __new__(cls, *args, **kwargs):
-        kwargs.pop('mimetype', None)
-        kwargs.pop('content_type', None)
+    _mimetype = 'text/plain'
+    _content_type = 'text/plain'
+    _data_filters = []
+
+    def __init__(self, response, **kwargs):
+        kwargs['mimetype'] = self._mimetype
+        kwargs['content_type'] = self._content_type
         headers = kwargs.pop('headers', {})
         if headers:
             headers.pop('Content-Type', None)
             kwargs['headers'] = headers
-        return super(CustomResponse, cls).__new__(cls, *args, **kwargs)
+        for filter_func in self._data_filters:
+            response = filter_func(response)
+        return super(CustomResponse, self).__init__(response, **kwargs)
+
+    @property
+    def data_filters(self):
+        return self._data_filters[:]
+
+
+def wrap_with_root_element(data):
+    return {"root": data}
 
 
 class XmlResponse(CustomResponse):
-    default_mimetype = 'text/xml'
-
-    def __init__(self, data, *args, **kwargs):
-        super(XmlResponse, self).__init__(xml_dumps({'root': data}),
-                                          mimetype='application/xml',
-                                          content_type='application/xml',
-                                          *args, **kwargs)
+    _mimetype = 'text/xml'
+    _content_type = 'text/xml'
+    _data_filters = [wrap_with_root_element, xml_dumps]
 
 
 class PlainResponse(CustomResponse):
-    default_mimetype = 'text/plain'
+    pass
 
 
 class JsonResponse(CustomResponse):
-    default_mimetype = 'application/json'
-
-    def __init__(self, data, *args, **kwargs):
-        super(JsonResponse, self).__init__(to_json(data),
-                                           mimetype='application/json',
-                                           content_type='application/json',
-                                           *args, **kwargs)
+    _mimetype = 'application/json'
+    _content_type = 'application/json'
+    _data_filters = [to_json]
 
 
 class ControllerResponse(object):
@@ -124,11 +130,14 @@ class ControllerResponse(object):
                             request.headers.get('accept').split(',')[0]
 
             if 'json' in accept_header:
-                return ControllerResponse.Response.to_json(data, status, **kwargs)
+                return ControllerResponse.Response.to_json(data, status,
+                                                           **kwargs)
             if 'xml' in accept_header:
-                return ControllerResponse.Response.to_xml(data, status, **kwargs)
+                return ControllerResponse.Response.to_xml(data, status,
+                                                          **kwargs)
             if 'plain' in accept_header:
-                return ControllerResponse.Response.to_plain(data, status, **kwargs)
+                return ControllerResponse.Response.to_plain(data, status,
+                                                            **kwargs)
 
             return make_response(Response(data), status, **kwargs)
 
