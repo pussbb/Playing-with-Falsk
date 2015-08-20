@@ -45,7 +45,7 @@ def requires_auth(f):
 
 class Welcome(Controller):
 
-    ROUTE_BASE = ''
+    resource = ''
 
     def _before(self, *args, **kwargs):
         print(args)

@@ -11,7 +11,7 @@ from flask_app.helpers.app import create_blueprint
 
 
 class Test(Controller):
-    ROUTE_BASE = ''
+    resource = ''
 
     @get_method('/hi/')
     def index(self):
