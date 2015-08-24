@@ -5,8 +5,12 @@
 
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
+import pprint
+import collections
 
 from flask import Response, request, make_response, json
+from flask_sqlalchemy import BaseQuery
+
 from simplexml import dumps as xml_dumps
 
 from ..model import BaseModel
@@ -50,18 +54,36 @@ class CustomResponse(Response):
         return self._data_filters[:]
 
 
+def xml_parse_data(data):
+
+    if isinstance(data, BaseModel):
+        return xml_parse_data({data.__class__.__name__.lower(): data.dump()})
+    if isinstance(data, (list, tuple, set, BaseQuery)):
+        return [xml_parse_data(item) for item in data]
+    if isinstance(data, dict):
+        return {key: xml_parse_data(value) for key, value in data.items()}
+    return data
+
+
 def wrap_with_root_element(data):
-    return {"root": data}
+    return {'root': data}
 
 
 class XmlResponse(CustomResponse):
     _mimetype = 'text/xml'
     _content_type = 'text/xml'
-    _data_filters = [wrap_with_root_element, xml_dumps]
+    _data_filters = [xml_parse_data, wrap_with_root_element, xml_dumps]
 
 
 class PlainResponse(CustomResponse):
-    pass
+    _mimetype = 'text/plain'
+    _content_type = 'text/plain'
+    _data_filters = [xml_parse_data, pprint.PrettyPrinter(indent=4, depth=50).pformat]
+
+
+class HTMLResponse(CustomResponse):
+    _mimetype = 'text/html'
+    _content_type = 'text/html'
 
 
 class JsonResponse(CustomResponse):
@@ -113,6 +135,17 @@ class ControllerResponse(object):
             return PlainResponse(data, status=status, **kwargs)
 
         @staticmethod
+        def to_html(data, status=200, **kwargs):
+            """ Send response as plain text
+
+            :param data:
+            :param status:
+            :param kwargs:
+            :return:
+            """
+            return HTMLResponse(data, status=status, **kwargs)
+
+        @staticmethod
         def empty(status=204, **kwargs):
             return Response(u"", status=status, **kwargs)
 
@@ -128,17 +161,15 @@ class ControllerResponse(object):
             """
             accept_header = request.headers.get('content-type') or \
                             request.headers.get('accept').split(',')[0]
-
+            func = None
             if 'json' in accept_header:
-                return ControllerResponse.Response.to_json(data, status,
-                                                           **kwargs)
+                func = ControllerResponse.Response.to_json
             if 'xml' in accept_header:
-                return ControllerResponse.Response.to_xml(data, status,
-                                                          **kwargs)
+                func = ControllerResponse.Response.to_xml
             if 'plain' in accept_header:
-                return ControllerResponse.Response.to_plain(data, status,
-                                                            **kwargs)
-
+                func = ControllerResponse.Response.to_plain
+            if func:
+                return func(data, status, **kwargs)
             return make_response(Response(data), status, **kwargs)
 
     @property
@@ -149,7 +180,7 @@ class ControllerResponse(object):
         func = {
             'json': self.response.to_json,
             'xml': self.response.to_xml,
-            'plain': self.response.to_plain
+            'plain': self.response.to_plain,
         }.get(self.DEFAULT_RESPONSE_TYPE, self.response.as_requested)
         return func(*args, **kwargs)
 

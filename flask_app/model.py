@@ -46,8 +46,9 @@ class BaseModel(object):
         """Format values if needed
 
         """
+
         if not hasattr(self, attr):
-            return None
+            return ''
         value = getattr(self, attr)
         val_type = type(value)
         if val_type in (datetime.datetime, datetime.date, Decimal):
@@ -66,6 +67,7 @@ class BaseModel(object):
     @classmethod
     def find_all(cls, **criterion):
         return cls.query.filter_by(**criterion)
+
 
 class BaseReadOnlyModel(BaseModel):
 
