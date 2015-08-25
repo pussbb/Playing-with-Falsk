@@ -6,9 +6,9 @@
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
 import pprint
-import collections
 
 from flask import Response, request, make_response, json
+from flask._compat import string_types
 from flask_sqlalchemy import BaseQuery
 
 from simplexml import dumps as xml_dumps
@@ -54,14 +54,18 @@ class CustomResponse(Response):
         return self._data_filters[:]
 
 
-def xml_parse_data(data):
-
+def prepare_data(data, add_model_name=True):
     if isinstance(data, BaseModel):
-        return xml_parse_data({data.__class__.__name__.lower(): data.dump()})
+        if add_model_name:
+            data = {data.__class__.__name__.lower(): data.dump()}
+        else:
+            data = data.dump()
+        return prepare_data(data, add_model_name)
     if isinstance(data, (list, tuple, set, BaseQuery)):
-        return [xml_parse_data(item) for item in data]
+        return [prepare_data(item, add_model_name) for item in data]
     if isinstance(data, dict):
-        return {key: xml_parse_data(value) for key, value in data.items()}
+        return {key: prepare_data(value, add_model_name)
+                for key, value in data.items()}
     return data
 
 
@@ -72,13 +76,20 @@ def wrap_with_root_element(data):
 class XmlResponse(CustomResponse):
     _mimetype = 'text/xml'
     _content_type = 'text/xml'
-    _data_filters = [xml_parse_data, wrap_with_root_element, xml_dumps]
+    _data_filters = [prepare_data, wrap_with_root_element, xml_dumps]
+
+
+def plain_data_filter(data):
+    if isinstance(data, (Response, string_types)):
+        return data
+    return pprint.pformat(prepare_data(data, add_model_name=False), indent=4,
+                          depth=50)
 
 
 class PlainResponse(CustomResponse):
     _mimetype = 'text/plain'
     _content_type = 'text/plain'
-    _data_filters = [xml_parse_data, pprint.PrettyPrinter(indent=4, depth=50).pformat]
+    _data_filters = [plain_data_filter]
 
 
 class HTMLResponse(CustomResponse):
