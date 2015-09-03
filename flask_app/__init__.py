@@ -21,8 +21,9 @@ try:
     from werkzeug.contrib.profiler import ProfilerMiddleware
 except ImportError as _:
     ProfilerMiddleware = None
-    warnings.warn("ProfilerMiddleware is not available" + traceback.format_exc())
-
+    warnings.warn(
+        "ProfilerMiddleware is not available" + traceback.format_exc()
+    )
 
 OS_ENV_SETTINGS_KEY_TEMPLATE = '{app_name}_SETTINGS'
 
@@ -58,6 +59,7 @@ def create_app(app_name, config_name=None, **app_kwargs):
     def favicon():
         return send_from_directory(favicon_icon_path, 'favicon.ico',
                                    mimetype='image/vnd.microsoft.icon')
+
     if app.debug and LintMiddleware:
         app.wsgi_app = LintMiddleware(app.wsgi_app)
 

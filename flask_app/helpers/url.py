@@ -21,7 +21,7 @@ def reduce_slashes(url):
     :param url:
     :return: string
     """
-    return re.sub(r'(?<!:)\/\/+', '/', url)
+    return re.sub(r'(?<!:)//+', '/', url)
 
 
 def build_url(endpoint, unquote=False, **kwargs):
@@ -40,6 +40,9 @@ def build_url(endpoint, unquote=False, **kwargs):
 
 
 def app_root_url(app, name=""):
+    """
+
+    """
     root_url = '/'
     if not isinstance(app, Blueprint):
         root_url = app.config.get('APPLICATION_ROOT', '/') or '/'

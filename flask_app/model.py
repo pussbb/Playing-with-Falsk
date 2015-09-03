@@ -18,10 +18,12 @@ class BaseModel(object):
 
     EXTRA_FIELDS = []
 
-    def dump(self, additional_fields=[]):
+    def dump(self, additional_fields=None):
         """SqlAlchemy object to dict
 
         """
+        if not additional_fields:
+            additional_fields = []
         result = {column: self.__get_attr(column) for column in self}
         for field in set(additional_fields + self.EXTRA_FIELDS):
             result[field] = self.__get_attr(field)
@@ -59,9 +61,9 @@ class BaseModel(object):
         return value
 
     @classmethod
-    def find(cls, id=None, **criterion):
-        if id:
-            criterion['id'] = id
+    def find(cls, pk=None, **criterion):
+        if pk:
+            criterion['id'] = pk
         return cls.query.filter_by(**criterion).one()
 
     @classmethod
@@ -81,7 +83,7 @@ class BaseReadOnlyModel(BaseModel):
                 cls,
                 lambda x: isinstance(x, InstrumentedAttribute)
             )
-            for attr_name, attr in attributes:
+            for _, attr in attributes:
                 for attr_event in ['append', 'set', 'remove']:
                     event.listen(attr, attr_event, cls.__read_only_column)
             cls.__wrapped_readonly__ = True

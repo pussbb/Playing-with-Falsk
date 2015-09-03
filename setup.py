@@ -15,6 +15,6 @@ setup(
         'flask',
         'Flask-SQLAlchemy',
         'python-simplexml',
-        'SQLAlchemy-Utils',
+        'SQLAlchemy-Utils', 'simplexml',
     ],
 )

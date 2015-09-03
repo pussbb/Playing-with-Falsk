@@ -8,16 +8,31 @@ from __future__ import unicode_literals, print_function, absolute_import, \
 import pprint
 
 from flask import Response, request, make_response, json
-from flask._compat import string_types
+from flask.helpers import string_types
 from flask_sqlalchemy import BaseQuery
 
 from simplexml import dumps as xml_dumps
 
 from ..model import BaseModel
 
+__all__ = ['XmlResponse', 'PlainResponse', 'HTMLResponse', 'JsonResponse',
+           'ControllerResponse']
+
 
 def to_json(data, **kwargs):
+    """Helper class to dump data from DB.Model(SQLAlchemy) class
+
+    :param data:
+    :param kwargs:
+    :return:
+    """
+
     def default(obj):
+        """wrapper function
+
+        :param obj:
+        :return:
+        """
         if isinstance(obj, BaseModel):
             return obj.dump()
         try:
@@ -27,7 +42,8 @@ def to_json(data, **kwargs):
         else:
             return list(iterable)
         # Let the base class default method raise the TypeError
-        return json.JSONEncoder.default(obj)
+        return json.JSONEncoder().default(obj)
+
     kwargs['indent'] = 2
     kwargs['default'] = default
     return json.dumps(data, **kwargs)
@@ -47,14 +63,24 @@ class CustomResponse(Response):
             kwargs['headers'] = headers
         for filter_func in self._data_filters:
             response = filter_func(response)
-        return super(CustomResponse, self).__init__(response, **kwargs)
+        super(CustomResponse, self).__init__(response, **kwargs)
 
     @property
     def data_filters(self):
+        """List of all data filters of response class
+
+        :return: list
+        """
         return self._data_filters[:]
 
 
 def prepare_data(data, add_model_name=True):
+    """Walk throw data and prepare it for PlainResponse or XMLResponse
+
+    :param data:
+    :param add_model_name:
+    :return:
+    """
     if isinstance(data, BaseModel):
         if add_model_name:
             data = {data.__class__.__name__.lower(): data.dump()}
@@ -70,16 +96,31 @@ def prepare_data(data, add_model_name=True):
 
 
 def wrap_with_root_element(data):
+    """Helper function for XmlResponse it wraps data with root element
+
+    :param data:
+    :return:
+    """
     return {'root': data}
 
 
 class XmlResponse(CustomResponse):
+    """Helper class to send valid plain response with valid response headers
+    and prepared data for this format
+
+    """
     _mimetype = 'text/xml'
     _content_type = 'text/xml'
     _data_filters = [prepare_data, wrap_with_root_element, xml_dumps]
 
 
 def plain_data_filter(data):
+    """Simple filter for PlainResponse. If output data is not string
+    it will convert it into string using pprint into string
+
+    :param data:
+    :return:
+    """
     if isinstance(data, (Response, string_types)):
         return data
     return pprint.pformat(prepare_data(data, add_model_name=False), indent=4,
@@ -87,30 +128,44 @@ def plain_data_filter(data):
 
 
 class PlainResponse(CustomResponse):
+    """Helper class to send valid plain response with valid response headers
+    and prepared data for this format
+
+    """
     _mimetype = 'text/plain'
     _content_type = 'text/plain'
     _data_filters = [plain_data_filter]
 
 
 class HTMLResponse(CustomResponse):
+    """Helper class to send valid html response with valid response headers
+
+    """
     _mimetype = 'text/html'
     _content_type = 'text/html'
 
 
 class JsonResponse(CustomResponse):
+    """Helper class to send valid json response with valid response headers and
+    dumped data into JSON data format
+
+    """
+
     _mimetype = 'application/json'
     _content_type = 'application/json'
     _data_filters = [to_json]
 
 
 class ControllerResponse(object):
-
     """ values 'json', 'xml', 'plain'
 
     """
     DEFAULT_RESPONSE_TYPE = None
 
     class Response(object):
+        """Abstract class
+
+        """
 
         @staticmethod
         def to_json(data, status=200, **kwargs):
@@ -158,6 +213,12 @@ class ControllerResponse(object):
 
         @staticmethod
         def empty(status=204, **kwargs):
+            """Returns empty response with a 204 http status code
+
+            :param status:
+            :param kwargs:
+            :return:
+            """
             return Response(u"", status=status, **kwargs)
 
         @staticmethod
@@ -170,8 +231,11 @@ class ControllerResponse(object):
             :param kwargs:
             :return:
             """
-            accept_header = request.headers.get('content-type') or \
-                            request.headers.get('accept').split(',')[0]
+            accept_header = request.headers.get(
+                'content-type',
+                request.headers.get('accept').split(',')[0]
+            )
+
             func = None
             if 'json' in accept_header:
                 func = ControllerResponse.Response.to_json
@@ -185,13 +249,25 @@ class ControllerResponse(object):
 
     @property
     def response(self):
+        """Return Response class
+
+
+        :return: class
+        """
         return ControllerResponse.Response
 
     def make_response(self, *args, **kwargs):
+        """Sends http response if DEFAULT_RESPONSE_TYPE is set it will
+        send response in that format. Otherwise it will try to guess in which
+        format response should be based on request header 'content-type'
+
+        :param args:
+        :param kwargs:
+        :return:
+        """
         func = {
             'json': self.response.to_json,
             'xml': self.response.to_xml,
             'plain': self.response.to_plain,
         }.get(self.DEFAULT_RESPONSE_TYPE, self.response.as_requested)
         return func(*args, **kwargs)
-

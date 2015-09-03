@@ -18,8 +18,10 @@ from ..controller import Controller
 from .url import app_root_url
 
 
-def create_blueprint(app, name, import_name, controllers=[], register=False,
+def create_blueprint(app, name, import_name, controllers=None, register=False,
                      **kwargs):
+    if not controllers:
+        controllers = []
     if 'url_prefix' not in kwargs:
         kwargs['url_prefix'] = app_root_url(app, name+'/')
 

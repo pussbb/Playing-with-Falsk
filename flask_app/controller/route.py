@@ -36,8 +36,9 @@ class ControllerRoute(object):
                 if not kwargs.get('endpoint'):
                     kwargs['endpoint'] = cls.endpoint(func_name.upper())
                 kwargs['methods'] = [func_name.upper()]
-                view_func = app.view_functions.get(kwargs.get('endpoint')) or \
-                            app.view_functions.get(cls.__name__)
+                view_func = app.view_functions.get(
+                    kwargs.get('endpoint', app.view_functions.get(cls.__name__))
+                )
 
                 if not view_func:
                     view_func = cls.as_view(cls.__name__, *class_args,

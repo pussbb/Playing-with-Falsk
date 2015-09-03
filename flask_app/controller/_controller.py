@@ -34,7 +34,7 @@ class Controller(MethodView, ControllerRoute, ControllerResponse):
         pass
 
     def _before(self, *args, **kwargs):
-        """ Use it when you want to run things before running the class mehods
+        """ Use it when you want to run things before running the class methods
 
         :param args:
         :param kwargs:
@@ -53,10 +53,8 @@ class Controller(MethodView, ControllerRoute, ControllerResponse):
 
     def dispatch_request(self, *args, **kwargs):
 
-        func = kwargs.pop('__func', None)
-        if func and not request.is_xhr:
-            func = getattr(self, func)
-        else:
+        func = getattr(self, kwargs.pop('__func', None), None)
+        if not func:
             func = getattr(self, request.method.lower(), None)
             if func is None and request.method == 'HEAD':
                 func = getattr(self, 'get', None)
@@ -82,7 +80,8 @@ class Controller(MethodView, ControllerRoute, ControllerResponse):
         # result (data, code) in function e.g. return {}, 300
         return self.make_response(*result)
 
-    def render_view(self, template_name_or_list, view_data, status=200, *args, **kwargs):
+    def render_view(self, template_name_or_list, view_data, status=200, *args,
+                    **kwargs):
         """ Renders view in addition adds controller name in lower case as
         directory where file should be. To disable behavior adding class name
         please use '//' at the beginning of your template name

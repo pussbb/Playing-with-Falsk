@@ -36,5 +36,5 @@ class UserSettings(DbModel):
     __tablename__ = 'user_settings'
     id = DB.Column(DB.Integer, primary_key=True)
     user_id = DB.Column(DB.Integer, ForeignKey('users.id'))
-    user = relationship('User',uselist=False, backref=backref(__tablename__, ))
+    user = relationship('User', uselist=False, backref=backref(__tablename__, ))
     properties = DB.Column(DB.String)
