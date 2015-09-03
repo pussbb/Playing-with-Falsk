@@ -20,9 +20,13 @@ class ControllerRoute(object):
 
     @classmethod
     def register(cls, app=current_app, *class_args, **class_kwargs):
-        predict = lambda x: inspect.ismethod(x) or inspect.isfunction(x)
 
-        for func_name, func in inspect.getmembers(cls, predict):
+        methods = inspect.getmembers(
+            cls,
+            lambda x: inspect.ismethod(x) or inspect.isfunction(x)
+        )
+
+        for func_name, func in methods:
             for item in getattr(func, '_route', []):
                 cls.add_method_to_route(func_name, func, item, app, *class_args,
                                         **class_kwargs)

@@ -77,8 +77,11 @@ class BaseReadOnlyModel(BaseModel):
                 event.listen(cls, "before_{0}".format(model_event),
                              cls.__raise_exception)
 
-            predict = lambda x: isinstance(x, InstrumentedAttribute)
-            for attr_name, attr in inspect.getmembers(cls, predict):
+            attributes = inspect.getmembers(
+                cls,
+                lambda x: isinstance(x, InstrumentedAttribute)
+            )
+            for attr_name, attr in attributes:
                 for attr_event in ['append', 'set', 'remove']:
                     event.listen(attr, attr_event, cls.__read_only_column)
             cls.__wrapped_readonly__ = True

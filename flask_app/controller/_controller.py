@@ -97,7 +97,7 @@ class Controller(MethodView, ControllerRoute, ControllerResponse):
         """
 
         if not template_name_or_list:
-            raise ValueError("View name must be not empty")
+            raise ValueError("View name must not be empty")
         if not isinstance(template_name_or_list, (list, tuple, set)):
             template_name_or_list = [template_name_or_list]
         templates = []
