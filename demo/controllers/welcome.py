@@ -7,7 +7,7 @@ from __future__ import unicode_literals, print_function, absolute_import, \
     division
 
 from flask_app.controller import Controller, route, post_method, http_method, PlainResponse, \
-    XmlResponse, get_method
+    XmlResponse, get_method, JsonResponse
 from functools import wraps
 from pydoc import render_doc, doc, plain
 from flask import current_app, Response, request, session
@@ -94,7 +94,7 @@ class Welcome(Controller):
 
     @route('/test')
     def test(self):
-        return PlainResponse('', status=33333)
+        return JsonResponse([], status=200)
 
     @requires_auth
     @get_method('/docs/')

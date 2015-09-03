@@ -62,16 +62,36 @@ class BaseModel(object):
 
     @classmethod
     def find(cls, pk=None, **criterion):
+        """Find record in database according search criteria
+
+        :param pk:
+        :param criterion:
+        :return: Object or None
+        """
         if pk:
             criterion['id'] = pk
         return cls.query.filter_by(**criterion).one()
 
     @classmethod
     def find_all(cls, **criterion):
+        """Find all records in database according search criteria
+
+        :param criterion:
+        :return: BaseQuery
+        """
         return cls.query.filter_by(**criterion)
 
 
 class BaseReadOnlyModel(BaseModel):
+
+    """Simple wrapper class to make model with readonly columns and prevent
+    saving/adding/deleting any record from database table
+
+    :param cls:
+    :param args:
+    :param kwargs:
+    :return:
+    """
 
     def __new__(cls, *args, **kwargs):
         if not hasattr(cls, '__wrapped_readonly__'):

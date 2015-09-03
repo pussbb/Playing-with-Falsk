@@ -50,6 +50,11 @@ def to_json(data, **kwargs):
 
 
 class CustomResponse(Response):
+    """
+
+    :param response:
+    :param kwargs:
+    """
     _mimetype = 'text/plain'
     _content_type = 'text/plain'
     _data_filters = []

@@ -16,11 +16,21 @@ class ControllerRoute(object):
 
     @classmethod
     def endpoint(cls, name=""):
+        """Generates string for endpoint
+
+        :param name:
+        :return:
+        """
         return str("{0}:{1}".format(cls.__name__, name))
 
     @classmethod
     def register(cls, app=current_app, *class_args, **class_kwargs):
+        """ Register class methods as application route
 
+        :param app:
+        :param class_args:
+        :param class_kwargs:
+        """
         methods = inspect.getmembers(
             cls,
             lambda x: inspect.ismethod(x) or inspect.isfunction(x)
@@ -51,6 +61,16 @@ class ControllerRoute(object):
     def add_method_to_route(cls, func_name, func, route_data, app=current_app,
                             *class_args, **class_kwargs):
 
+        """Add class method to application route
+
+        :param func_name:
+        :param func:
+        :param route_data:
+        :param app:
+        :param class_args:
+        :param class_kwargs:
+        :return:
+        """
         rule, route_data = route_data
         if not route_data.get('endpoint'):
             route_data['endpoint'] = cls.endpoint(func_name)
@@ -71,6 +91,13 @@ class ControllerRoute(object):
 
     @classmethod
     def add_route(cls, app, rule, view_func, **kwargs):
+        """
+
+        :param app:
+        :param rule:
+        :param view_func:
+        :param kwargs:
+        """
         route_base = ''
         if cls.resource is None:
             route_base = cls.__name__

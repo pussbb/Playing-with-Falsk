@@ -52,7 +52,12 @@ class Controller(MethodView, ControllerRoute, ControllerResponse):
         pass
 
     def dispatch_request(self, *args, **kwargs):
+        """
 
+        :param args:
+        :param kwargs:
+        :return: :raise HTTPNotImplemented:
+        """
         func = getattr(self, kwargs.pop('__func', None), None)
         if not func:
             func = getattr(self, request.method.lower(), None)

@@ -20,6 +20,16 @@ from .url import app_root_url
 
 def create_blueprint(app, name, import_name, controllers=None, register=False,
                      **kwargs):
+    """Helper function to create blueprints(do all necessary steps).
+
+    :param app:
+    :param name:
+    :param import_name:
+    :param controllers:
+    :param register:
+    :param kwargs:
+    :return:
+    """
     if not controllers:
         controllers = []
     if 'url_prefix' not in kwargs:
@@ -43,6 +53,12 @@ def create_blueprint(app, name, import_name, controllers=None, register=False,
 
 
 def import_blueprints(app):
+    """Scans specified in config folder with  blueprints and tries to register
+     them into application
+
+    :param app:
+    :return:
+    """
     folder_name = app.config.get('BLUEPRINTS_FOLDER', 'blueprints')
     folder = os.path.join(app.root_path, folder_name)
     if not os.path.isdir(folder):
@@ -62,6 +78,11 @@ def import_blueprints(app):
 
 
 def simple_exception_handler(exception=None):
+    """Simple function to handle errors.
+
+    :param exception:
+    :return:
+    """
     if isinstance(exception, RequestRedirect):
         return exception.get_response(current_app)
 

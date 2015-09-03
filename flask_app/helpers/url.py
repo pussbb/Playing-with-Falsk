@@ -40,8 +40,12 @@ def build_url(endpoint, unquote=False, **kwargs):
 
 
 def app_root_url(app, name=""):
-    """
+    """Builds url for an application including APPLICATION_ROOT which specified
+    in the application config
 
+    :param app:
+    :param name:
+    :return:
     """
     root_url = '/'
     if not isinstance(app, Blueprint):
