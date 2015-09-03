@@ -9,7 +9,7 @@ from __future__ import unicode_literals, print_function, absolute_import, \
 
 import os
 
-from flask import render_template
+from flask import render_template, request, make_response
 from werkzeug.exceptions import NotImplemented as HTTPNotImplemented
 from flask.views import MethodView
 
