@@ -58,7 +58,7 @@ class Controller(MethodView, ControllerRoute, ControllerResponse):
         :param kwargs:
         :return: :raise HTTPNotImplemented:
         """
-        func = getattr(self, kwargs.pop('__func', None), None)
+        func = getattr(self, kwargs.pop('__func', ''), None)
         if not func:
             func = getattr(self, request.method.lower(), None)
             if func is None and request.method == 'HEAD':
