@@ -57,7 +57,7 @@ class Welcome(Controller):
         :param ddd:
         :return:
         """
-        return XmlResponse({'asa': 'dfd'}, status=200)
+        return XmlResponse(self.request_values, status=200)
 
     @http_method('/', defaults={'ddd': None})
     @http_method('/<int:ddd>')

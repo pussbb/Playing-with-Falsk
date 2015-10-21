@@ -10,10 +10,12 @@ from __future__ import unicode_literals, print_function, absolute_import, \
 import os
 
 from flask import render_template, request, make_response
+from werkzeug.datastructures import CombinedMultiDict, MultiDict
 from werkzeug.exceptions import NotImplemented as HTTPNotImplemented
 from flask.views import MethodView
 
 import re
+from werkzeug.utils import cached_property
 from werkzeug.wrappers import BaseResponse
 
 from .route import ControllerRoute
@@ -124,10 +126,20 @@ class Controller(MethodView, ControllerRoute, ControllerResponse):
         """
         return self.response.empty()
 
-    @property
+    @cached_property
     def request_values(self):
         """ Get requested query parameters including all GET and POST
 
         :return: MultiDict
         """
-        return request.values
+        json_data = request.get_json()
+        if not json_data:
+            json_data = []
+
+        args = []
+        for d in json_data, request.values:
+            if not isinstance(d, MultiDict):
+                d = MultiDict(d)
+            args.append(d)
+        return CombinedMultiDict(args)
+
