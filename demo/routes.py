@@ -11,7 +11,7 @@ from flask import current_app
 from .controllers import build, welcome
 from flask_app.helpers.app import import_blueprints
 
-welcome.Welcome.register()
+welcome.WelcomeSTr.register()
 build.Build.register()
 
 import_blueprints(current_app)

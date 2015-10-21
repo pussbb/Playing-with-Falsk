@@ -43,9 +43,11 @@ def requires_auth(f):
     return decorated
 
 
-class Welcome(Controller):
+class WelcomeSTr(Controller):
 
     resource = ''
+
+    template_dir = 'welcome'
 
     def _before(self, *args, **kwargs):
         print(args)

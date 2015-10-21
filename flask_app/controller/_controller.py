@@ -6,13 +6,13 @@
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
 
-
 import os
 
 from flask import render_template, request, make_response
+
 from werkzeug.datastructures import CombinedMultiDict, MultiDict
 from werkzeug.exceptions import NotImplemented as HTTPNotImplemented
-from flask.views import MethodView
+
 
 import re
 from werkzeug.utils import cached_property
@@ -22,9 +22,22 @@ from .route import ControllerRoute
 from .response import *
 
 
-class Controller(MethodView, ControllerRoute, ControllerResponse):
+
+class Controller(ControllerResponse, ControllerRoute):
+
+    decorators = []
 
     resource = None
+
+    template_dir = None
+
+    __split_by_capital = re.compile('([A-Z][a-z]+)+')
+
+    @cached_property
+    def template_dir(self):
+        parts = self.__split_by_capital.findall(self.__class__.__name__)
+        return os.path.join(*[item.lower() for item in filter(None, parts)])
+
 
     def __dummy(self, *args, **kwargs):
         """For internal usage and do nothing
@@ -56,6 +69,8 @@ class Controller(MethodView, ControllerRoute, ControllerResponse):
     def dispatch_request(self, func_name, *args, **kwargs):
         """
 
+
+        :param func_name:
         :param args:
         :param kwargs:
         :return: :raise HTTPNotImplemented:
@@ -105,10 +120,7 @@ class Controller(MethodView, ControllerRoute, ControllerResponse):
         templates = []
         for template_name in template_name_or_list:
             if not template_name.startswith('//'):
-                parts = re.split(r'([A-Z][a-z]+)+', self.__class__.__name__)
-                parts = map(lambda x: x.lower(), filter(None, parts))
-                parts.append(template_name)
-                templates.append(os.path.join(*parts))
+                templates.append(os.path.join(self.template_dir, template_name))
             else:
                 templates.append(template_name.lstrip('//'))
 
@@ -142,4 +154,3 @@ class Controller(MethodView, ControllerRoute, ControllerResponse):
                 d = MultiDict(d)
             args.append(d)
         return CombinedMultiDict(args)
-
