@@ -5,12 +5,10 @@
 
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
-import pprint
+
 
 from flask import Response, request, make_response, json
-from flask.helpers import string_types
 from flask_sqlalchemy import BaseQuery
-
 from simplexml import dumps as xml_dumps
 
 from ..model import BaseModel

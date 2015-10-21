@@ -7,20 +7,17 @@ from __future__ import unicode_literals, print_function, absolute_import, \
     division
 
 import os
+import re
 
 from flask import render_template, request, make_response
-
+from flask._compat import string_types
 from werkzeug.datastructures import CombinedMultiDict, MultiDict
 from werkzeug.exceptions import NotImplemented as HTTPNotImplemented
-
-
-import re
 from werkzeug.utils import cached_property
 from werkzeug.wrappers import BaseResponse
 
 from .route import ControllerRoute
 from .response import *
-
 
 
 class Controller(ControllerResponse, ControllerRoute):
@@ -37,7 +34,6 @@ class Controller(ControllerResponse, ControllerRoute):
     def template_dir(self):
         parts = self.__split_by_capital.split(self.__class__.__name__)
         return os.path.join(*[item.lower() for item in parts])
-
 
     def __dummy(self, *args, **kwargs):
         """For internal usage and do nothing
@@ -81,10 +77,9 @@ class Controller(ControllerResponse, ControllerRoute):
 
         self._before(*args, **kwargs)
         action = func.__name__
-        getattr(self, "before_{0}".format(action), self.__dummy)(*args,
-                                                                 **kwargs)
+        getattr(self, 'before_' + action, self.__dummy)(*args, **kwargs)
         result = func(*args, **kwargs)
-        getattr(self, "after_{0}".format(action), self.__dummy)(*args, **kwargs)
+        getattr(self, 'after_' + action, self.__dummy)(*args, **kwargs)
         self._after(*args, **kwargs)
 
         if not result:
@@ -98,7 +93,7 @@ class Controller(ControllerResponse, ControllerRoute):
 
         return self.make_response(*result)
 
-    def render_view(self, template_name_or_list, view_data, status=200, *args,
+    def render_view(self, view_name_or_list, view_data, status=200, *args,
                     **kwargs):
         """ Renders view in addition adds controller name in lower case as
         directory where file should be. To disable behavior adding class name
@@ -113,19 +108,17 @@ class Controller(ControllerResponse, ControllerRoute):
         :return:
         """
 
-        if not template_name_or_list:
-            raise ValueError("View name must not be empty")
-        if not isinstance(template_name_or_list, (list, tuple, set)):
-            template_name_or_list = [template_name_or_list]
-        templates = []
-        for template_name in template_name_or_list:
-            if not template_name.startswith('//'):
-                templates.append(os.path.join(self.template_dir, template_name))
-            else:
-                templates.append(template_name.lstrip('//'))
+        assert view_name_or_list, "View name must not be empty"
+
+        if isinstance(view_name_or_list, string_types):
+            view_name_or_list = [view_name_or_list]
+        views = []
+        for view_name in view_name_or_list:
+            views.append(os.path.join(self.template_dir, view_name))
+            views.append(view_name)
 
         return make_response(
-            render_template(templates, **view_data),
+            render_template(views, **view_data),
             status,
             *args,
             **kwargs
