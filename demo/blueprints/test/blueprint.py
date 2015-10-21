@@ -14,6 +14,7 @@ class Test(Controller):
     resource = ''
 
     @get_method('/hi/')
+    @get_method('/hi2/')
     def index(self):
         return self.render_view("test.html", {})
 

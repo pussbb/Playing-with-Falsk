@@ -52,17 +52,17 @@ class Welcome(Controller):
 
     @http_method('/<int:ddd>')
     def post(self, ddd=0):
-        """
+        """ sdfsdf sdfdsd sdfdsfds asfddasd dfdsfdsfds
 
         :param ddd:
         :return:
         """
-        return XmlResponse({'asa': 'dfd'}, 200)
+        return XmlResponse({'asa': 'dfd'}, status=200)
 
     @http_method('/', defaults={'ddd': None})
     @http_method('/<int:ddd>')
     def get(self, ddd):
-        return {}, 200
+        return {'dd': ddd}, 200
 
     @http_method('/<int:ddd>')
     def prepost(self, ddd):

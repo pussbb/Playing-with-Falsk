@@ -11,8 +11,13 @@ import inspect
 from flask import current_app
 from ..helpers.url import app_root_url, reduce_slashes
 
+_VIEW_FUNCTIONS = {}
+
 
 class ControllerRoute(object):
+    """Route registrars
+
+    """
 
     @classmethod
     def endpoint(cls, name=""):
@@ -38,29 +43,17 @@ class ControllerRoute(object):
 
         for func_name, func in methods:
             for item in getattr(func, '_route', []):
-                cls.add_method_to_route(func_name, func, item, app, *class_args,
+                cls.__add_method_to_route(func, item, app, *class_args,
                                         **class_kwargs)
 
             for item in getattr(func, '_http_method_route', []):
-                rule, kwargs = item
-                if not kwargs.get('endpoint'):
-                    kwargs['endpoint'] = cls.endpoint(func_name.upper())
-                kwargs['methods'] = [func_name.upper()]
-                view_func = app.view_functions.get(
-                    kwargs.get('endpoint', app.view_functions.get(cls.__name__))
-                )
-
-                if not view_func:
-                    view_func = cls.as_view(cls.__name__, *class_args,
-                                            **class_kwargs)
-
-                wraps(func)(view_func)
-                cls.add_route(app, rule, view_func, **kwargs)
+                item[1]['methods'] = [func_name.upper()]
+                cls.__add_method_to_route(func, item, app, *class_args,
+                                        **class_kwargs)
 
     @classmethod
-    def add_method_to_route(cls, func_name, func, route_data, app=current_app,
-                            *class_args, **class_kwargs):
-
+    def __add_method_to_route(cls, func, route_data, app, *class_args,
+                              **class_kwargs):
         """Add class method to application route
 
         :param func_name:
@@ -73,19 +66,19 @@ class ControllerRoute(object):
         """
         rule, route_data = route_data
         if not route_data.get('endpoint'):
-            route_data['endpoint'] = cls.endpoint(func_name)
+            route_data['endpoint'] = cls.endpoint(func.__name__)
 
-        proxy = app.view_functions.get(route_data['endpoint'])
+        proxy = _VIEW_FUNCTIONS.get(route_data['endpoint'])
         if not proxy:
             @wraps(func)
             def proxy(*args, **kwargs):
-                kwargs['__func'] = func_name
-                return cls(*class_args,
-                           **class_kwargs).dispatch_request(*args, **kwargs)
+                return cls(*class_args, **class_kwargs).dispatch_request(
+                    func.__name__, *args, **kwargs)
 
-            if cls.decorators:
-                for decorator in cls.decorators:
-                    proxy = decorator(proxy)
+            for decorator in cls.decorators:
+                proxy = decorator(proxy)
+
+            _VIEW_FUNCTIONS[route_data['endpoint']] = proxy
 
         cls.add_route(app, rule, proxy, **route_data)
 
@@ -98,12 +91,9 @@ class ControllerRoute(object):
         :param view_func:
         :param kwargs:
         """
-        route_base = ''
-        if cls.resource is None:
-            route_base = cls.__name__
-
-        if route_base:
-            route_base = route_base[0].lower() + route_base[1:]
+        route_base = cls.resource
+        if route_base is None:
+            route_base = cls.__name__[0].lower() + cls.__name__[1:]
 
         uri = "{app_root}/{route_base}{route}".format(
             app_root=app_root_url(app),
@@ -112,6 +102,6 @@ class ControllerRoute(object):
         )
         # get settings if it an blueprint get it from current app
         config = getattr(app, 'config', current_app.config)
-        if 'strict_slashes' not in kwargs.keys():
+        if 'strict_slashes' not in kwargs:
             kwargs['strict_slashes'] = config.get('STRICT_SLASHES', True)
         app.add_url_rule(reduce_slashes(uri), view_func=view_func, **kwargs)

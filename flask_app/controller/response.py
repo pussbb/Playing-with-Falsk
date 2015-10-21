@@ -119,19 +119,6 @@ class XmlResponse(CustomResponse):
     _data_filters = [prepare_data, wrap_with_root_element, xml_dumps]
 
 
-def plain_data_filter(data):
-    """Simple filter for PlainResponse. If output data is not string
-    it will convert it into string using pprint into string
-
-    :param data:
-    :return:
-    """
-    if isinstance(data, (Response, string_types)):
-        return data
-    return pprint.pformat(prepare_data(data, add_model_name=False), indent=4,
-                          depth=50)
-
-
 class PlainResponse(CustomResponse):
     """Helper class to send valid plain response with valid response headers
     and prepared data for this format
@@ -139,7 +126,7 @@ class PlainResponse(CustomResponse):
     """
     _mimetype = 'text/plain'
     _content_type = 'text/plain'
-    _data_filters = [plain_data_filter]
+    _data_filters = []
 
 
 class HTMLResponse(CustomResponse):

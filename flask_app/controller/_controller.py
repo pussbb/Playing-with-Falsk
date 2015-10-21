@@ -51,20 +51,16 @@ class Controller(MethodView, ControllerRoute, ControllerResponse):
         """
         pass
 
-    def dispatch_request(self, *args, **kwargs):
+    def dispatch_request(self, func_name, *args, **kwargs):
         """
 
         :param args:
         :param kwargs:
         :return: :raise HTTPNotImplemented:
         """
-        func = getattr(self, kwargs.pop('__func', ''), None)
+        func = getattr(self, func_name, None)
         if not func:
-            func = getattr(self, request.method.lower(), None)
-            if func is None and request.method == 'HEAD':
-                func = getattr(self, 'get', None)
-            if not func:
-                raise HTTPNotImplemented()
+            raise HTTPNotImplemented()
 
         self._before(*args, **kwargs)
         action = func.__name__
@@ -82,7 +78,7 @@ class Controller(MethodView, ControllerRoute, ControllerResponse):
 
         if not isinstance(result, (list, set, tuple)):
             return self.make_response(result)
-        # result (data, code) in function e.g. return {}, 300
+
         return self.make_response(*result)
 
     def render_view(self, template_name_or_list, view_data, status=200, *args,
