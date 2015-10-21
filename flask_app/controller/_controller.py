@@ -35,8 +35,8 @@ class Controller(ControllerResponse, ControllerRoute):
 
     @cached_property
     def template_dir(self):
-        parts = self.__split_by_capital.findall(self.__class__.__name__)
-        return os.path.join(*[item.lower() for item in filter(None, parts)])
+        parts = self.__split_by_capital.split(self.__class__.__name__)
+        return os.path.join(*[item.lower() for item in parts])
 
 
     def __dummy(self, *args, **kwargs):

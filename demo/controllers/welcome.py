@@ -47,7 +47,7 @@ class WelcomeSTr(Controller):
 
     resource = ''
 
-    template_dir = 'welcome'
+    #template_dir = 'welcome'
 
     def _before(self, *args, **kwargs):
         print(args)
