@@ -29,12 +29,12 @@ class ControllerRoute(object):
         return str("{0}:{1}".format(cls.__name__, name))
 
     @classmethod
-    def register(cls, app=current_app, *class_args, **class_kwargs):
+    def register(cls, app=current_app, *cls_args, **cls_kwargs):
         """ Register class methods as application route
 
         :param app:
-        :param class_args:
-        :param class_kwargs:
+        :param cls_args:
+        :param cls_kwargs:
         """
         methods = inspect.getmembers(
             cls,
@@ -43,25 +43,25 @@ class ControllerRoute(object):
 
         for func_name, func in methods:
             for item in getattr(func, '_route', []):
-                cls.__add_method_to_route(func, item, app, *class_args,
-                                        **class_kwargs)
+                cls.__add_method_to_route(func, item, app, *cls_args,
+                                          **cls_kwargs)
 
             for item in getattr(func, '_http_method_route', []):
                 item[1]['methods'] = [func_name.upper()]
-                cls.__add_method_to_route(func, item, app, *class_args,
-                                        **class_kwargs)
+                cls.__add_method_to_route(func, item, app, *cls_args,
+                                          **cls_kwargs)
 
     @classmethod
-    def __add_method_to_route(cls, func, route_data, app, *class_args,
-                              **class_kwargs):
+    def __add_method_to_route(cls, func, route_data, app, *cls_args,
+                              **cls_kwargs):
         """Add class method to application route
 
         :param func_name:
         :param func:
         :param route_data:
         :param app:
-        :param class_args:
-        :param class_kwargs:
+        :param cls_args:
+        :param cls_kwargs:
         :return:
         """
         rule, route_data = route_data
@@ -72,7 +72,7 @@ class ControllerRoute(object):
         if not proxy:
             @wraps(func)
             def proxy(*args, **kwargs):
-                return cls(*class_args, **class_kwargs).dispatch_request(
+                return cls(*cls_args, **cls_kwargs).dispatch_request(
                     func.__name__, *args, **kwargs)
 
             for decorator in cls.decorators:
