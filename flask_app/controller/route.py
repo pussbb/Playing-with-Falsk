@@ -68,19 +68,27 @@ class ControllerRoute(object):
         if not route_data.get('endpoint'):
             route_data['endpoint'] = cls.endpoint(func.__name__)
 
-        proxy = _VIEW_FUNCTIONS.get(route_data['endpoint'])
+        proxy = cls.as_view(route_data['endpoint'], func.__name__,
+                            *cls_args, **cls_kwargs)
+
+        cls.add_route(app, rule, proxy, **route_data)
+
+    @classmethod
+    def as_view(cls, name, func_name=None, *cls_args, **cls_kwargs):
+        if not func_name:
+            func_name = name
+        proxy = _VIEW_FUNCTIONS.get(name)
         if not proxy:
-            @wraps(func)
+            @wraps(getattr(cls, func_name, cls))
             def proxy(*args, **kwargs):
                 return cls(*cls_args, **cls_kwargs).dispatch_request(
-                    func.__name__, *args, **kwargs)
+                    func_name, *args, **kwargs)
 
             for decorator in cls.decorators:
                 proxy = decorator(proxy)
 
-            _VIEW_FUNCTIONS[route_data['endpoint']] = proxy
-
-        cls.add_route(app, rule, proxy, **route_data)
+            _VIEW_FUNCTIONS[name] = proxy
+        return proxy
 
     @classmethod
     def add_route(cls, app, rule, view_func, **kwargs):
