@@ -43,16 +43,16 @@ class ControllerRoute(object):
 
         for func_name, func in methods:
             for item in getattr(func, '_route', []):
-                cls.__add_method_to_route(func, item, app, *cls_args,
+                cls.__add_method_to_route(func_name, item, app, *cls_args,
                                           **cls_kwargs)
 
             for item in getattr(func, '_http_method_route', []):
                 item[1]['methods'] = [func_name.upper()]
-                cls.__add_method_to_route(func, item, app, *cls_args,
+                cls.__add_method_to_route(func_name, item, app, *cls_args,
                                           **cls_kwargs)
 
     @classmethod
-    def __add_method_to_route(cls, func, route_data, app, *cls_args,
+    def __add_method_to_route(cls, func_name, route_data, app, *cls_args,
                               **cls_kwargs):
         """Add class method to application route
 
@@ -66,9 +66,9 @@ class ControllerRoute(object):
         """
         rule, route_data = route_data
         if not route_data.get('endpoint'):
-            route_data['endpoint'] = cls.endpoint(func.__name__)
+            route_data['endpoint'] = cls.endpoint(func_name)
 
-        proxy = cls.as_view(route_data['endpoint'], func.__name__,
+        proxy = cls.as_view(route_data['endpoint'], func_name,
                             *cls_args, **cls_kwargs)
 
         cls.add_route(app, rule, proxy, **route_data)
