@@ -8,10 +8,12 @@ from __future__ import unicode_literals, print_function, absolute_import, \
 
 
 from flask import Response, request, make_response, json
-from flask_sqlalchemy import BaseQuery
+try:
+    from flask_sqlalchemy import BaseQuery
+except ImportError as _:
+    BaseQuery = []
 from simplexml import dumps as xml_dumps
 
-from ..model import BaseModel
 
 __all__ = ['XmlResponse', 'PlainResponse', 'HTMLResponse', 'JsonResponse',
            'ControllerResponse']
@@ -31,7 +33,7 @@ def to_json(data, **kwargs):
         :param obj:
         :return:
         """
-        if isinstance(obj, BaseModel):
+        if obj and hasattr(obj, 'dump'):
             return obj.dump()
         try:
             iterable = iter(obj)

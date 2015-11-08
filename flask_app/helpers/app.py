@@ -66,16 +66,19 @@ def import_blueprints(app):
 
     dir_path, dirs, _ = next(os.walk(folder))
     base_module = '.'.join([app.name, folder_name])
+
     for dir_name in dirs:
+        if dir_name.startswith('_'):
+            continue
         try:
             module = importlib.import_module(
                 '.'.join([base_module, dir_name, 'blueprint'])
             )
         except ImportError as _:
             warnings.warn("Module {0} is not blueprint".format(dir_name))
+            traceback.print_exc()
         else:
             module.register_blueprint(app)
-
 
 def simple_exception_handler(exception=None):
     """Simple function to handle errors.
