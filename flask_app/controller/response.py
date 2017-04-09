@@ -6,8 +6,11 @@
 from __future__ import unicode_literals, print_function, absolute_import, \
     division
 
+import os
 
-from flask import Response, request, make_response, json
+from flask import Response, request, make_response, json, render_template
+from flask._compat import string_types
+
 try:
     from flask_sqlalchemy import BaseQuery
 except ImportError as _:
@@ -33,8 +36,12 @@ def to_json(data, **kwargs):
         :param obj:
         :return:
         """
+        if isinstance(obj, (bytes, bytearray)):
+            return obj.decode()
+
         if obj and hasattr(obj, 'dump'):
             return obj.dump()
+
         try:
             iterable = iter(obj)
         except TypeError:
@@ -44,8 +51,9 @@ def to_json(data, **kwargs):
         # Let the base class default method raise the TypeError
         return json.JSONEncoder().default(obj)
 
-    kwargs['indent'] = 2
+    kwargs['indent'] = 0
     kwargs['default'] = default
+    kwargs['ensure_ascii'] = False
     return json.dumps(data, **kwargs)
 
 
@@ -79,24 +87,22 @@ class CustomResponse(Response):
         return self._data_filters[:]
 
 
-def prepare_data(data, add_model_name=True):
+def prepare_data(data):
     """Walk throw data and prepare it for PlainResponse or XMLResponse
 
     :param data:
     :param add_model_name:
     :return:
     """
-    if isinstance(data, BaseModel):
-        if add_model_name:
-            data = {data.__class__.__name__.lower(): data.dump()}
-        else:
-            data = data.dump()
-        return prepare_data(data, add_model_name)
+    if not data:
+        return data
+
+    if hasattr(data, 'dump'):
+        return prepare_data({data.__class__.__name__.lower(): data.dump()})
     if isinstance(data, (list, tuple, set, BaseQuery)):
-        return [prepare_data(item, add_model_name) for item in data]
+        return [prepare_data(item) for item in data]
     if isinstance(data, dict):
-        return {key: prepare_data(value, add_model_name)
-                for key, value in data.items()}
+        return {key: prepare_data(value) for key, value in data.items()}
     return data
 
 
@@ -153,6 +159,8 @@ class ControllerResponse(object):
 
     """
     DEFAULT_RESPONSE_TYPE = None
+
+    template_dir = None
 
     class Response(object):
         """Abstract class
@@ -211,7 +219,25 @@ class ControllerResponse(object):
             :param kwargs:
             :return:
             """
-            return Response(u"", status=status, **kwargs)
+            return Response(b'', status=status, **kwargs)
+
+        @staticmethod
+        def guess_output():
+            accept_header = request.headers.get(
+                'content-type',
+                request.headers.get('accept').split(',')[0]
+            )
+
+            func = None
+            if 'json' in accept_header:
+                func = ControllerResponse.Response.to_json
+            elif 'xml' in accept_header:
+                func = ControllerResponse.Response.to_xml
+            elif 'plain' in accept_header:
+                func = ControllerResponse.Response.to_plain
+            elif 'html' in accept_header:
+                func = ControllerResponse.Response.to_html
+            return func
 
         @staticmethod
         def as_requested(data, status=200, **kwargs):
@@ -223,18 +249,7 @@ class ControllerResponse(object):
             :param kwargs:
             :return:
             """
-            accept_header = request.headers.get(
-                'content-type',
-                request.headers.get('accept').split(',')[0]
-            )
-
-            func = None
-            if 'json' in accept_header:
-                func = ControllerResponse.Response.to_json
-            if 'xml' in accept_header:
-                func = ControllerResponse.Response.to_xml
-            if 'plain' in accept_header:
-                func = ControllerResponse.Response.to_plain
+            func = ControllerResponse.Response.guess_output()
             if func:
                 return func(data, status, **kwargs)
             return make_response(Response(data), status, **kwargs)
@@ -261,5 +276,50 @@ class ControllerResponse(object):
             'json': self.response.to_json,
             'xml': self.response.to_xml,
             'plain': self.response.to_plain,
-        }.get(self.DEFAULT_RESPONSE_TYPE, self.response.as_requested)
+        }.get(self.DEFAULT_RESPONSE_TYPE,
+              ControllerResponse.Response.guess_output())
+        action = kwargs.pop('action', None)
+        if func and 'html' in func.__name__:
+            view_name = '/'.join([self.__class__.__name__.lower(), action])
+            return self.render_view(view_name + '.html', *args, **kwargs)
         return func(*args, **kwargs)
+
+    def render_view(self, view_name_or_list, view_data, status=200, *args,
+                    **kwargs):
+        """ Renders view in addition adds controller name in lower case as
+        directory where file should be. To disable behavior adding class name
+        please use '//' at the beginning of your template name
+        for e.g. '//path/some.html' -> 'path/some.html'
+
+        :param name: file name or list of file names for e.g. index.html
+        :param view_data: dictionary with data which needed to render view
+        :param status: int status code default 200
+        :param args:
+        :param kwargs:
+        :return:
+        """
+
+        assert view_name_or_list, "View name must not be empty"
+
+        if isinstance(view_name_or_list, string_types):
+            view_name_or_list = [view_name_or_list]
+        views = []
+        for view_name in view_name_or_list:
+            views.append(os.path.join(self.template_dir, view_name))
+            views.append(view_name)
+
+        if not isinstance(view_data, dict):
+            view_data = {'data': view_data}
+        return make_response(
+            render_template(views, **view_data),
+            status,
+            *args,
+            **kwargs
+        )
+
+    def render_nothing(self):
+        """ Will generate valid empty response with 204 http status code
+
+        :return:
+        """
+        return self.response.empty()

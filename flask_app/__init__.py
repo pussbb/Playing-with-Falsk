@@ -60,8 +60,8 @@ def create_app(app_name, config_name=None, **app_kwargs):
         return send_from_directory(favicon_icon_path, 'favicon.ico',
                                    mimetype='image/vnd.microsoft.icon')
 
-    if app.debug and LintMiddleware:
-        app.wsgi_app = LintMiddleware(app.wsgi_app)
+    #if app.debug and LintMiddleware:
+    #    app.wsgi_app = LintMiddleware(app.wsgi_app)
 
     if app.config.get('PROFILE', False) and ProfilerMiddleware:
         app.wsgi_app = ProfilerMiddleware(

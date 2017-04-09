@@ -9,8 +9,8 @@ from __future__ import unicode_literals, print_function, absolute_import, \
 import os
 import re
 
-from flask import render_template, request, make_response
-from flask._compat import string_types
+from flask import request
+
 from werkzeug.datastructures import CombinedMultiDict, MultiDict
 from werkzeug.exceptions import NotImplemented as HTTPNotImplemented
 from werkzeug.utils import cached_property
@@ -25,8 +25,6 @@ class Controller(ControllerResponse, ControllerRoute):
     decorators = []
 
     resource = None
-
-    template_dir = None
 
     __split_by_capital = re.compile('([A-Z][a-z]+)+')
 
@@ -89,47 +87,9 @@ class Controller(ControllerResponse, ControllerRoute):
             return result
 
         if not isinstance(result, (list, set, tuple)):
-            return self.make_response(result)
+            return self.make_response(result, action=action)
 
-        return self.make_response(*result)
-
-    def render_view(self, view_name_or_list, view_data, status=200, *args,
-                    **kwargs):
-        """ Renders view in addition adds controller name in lower case as
-        directory where file should be. To disable behavior adding class name
-        please use '//' at the beginning of your template name
-        for e.g. '//path/some.html' -> 'path/some.html'
-
-        :param name: file name or list of file names for e.g. index.html
-        :param view_data: dictionary with data which needed to render view
-        :param status: int status code default 200
-        :param args:
-        :param kwargs:
-        :return:
-        """
-
-        assert view_name_or_list, "View name must not be empty"
-
-        if isinstance(view_name_or_list, string_types):
-            view_name_or_list = [view_name_or_list]
-        views = []
-        for view_name in view_name_or_list:
-            views.append(os.path.join(self.template_dir, view_name))
-            views.append(view_name)
-
-        return make_response(
-            render_template(views, **view_data),
-            status,
-            *args,
-            **kwargs
-        )
-
-    def render_nothing(self):
-        """ Will generate valid empty response with 204 http status code
-
-        :return:
-        """
-        return self.response.empty()
+        return self.make_response(*result, action=action)
 
     @cached_property
     def request_values(self):
